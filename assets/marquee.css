@@ -1,0 +1,14 @@
+.marquee__content .marquee__repeated-items .image-block[style*="--size-style-height: fit;"] .image-block__image {
+  object-fit: contain;
+  height: 72px;
+}
+@media (max-width: 989px) {
+  .marquee__content .marquee__repeated-items .image-block[style*="--size-style-height: fit;"] .image-block__image {
+    height: 52px;
+  }
+}
+@media (max-width: 749px) {
+  marquee-component.section.spacing-style {
+    padding-block: 18px;
+  }
+}

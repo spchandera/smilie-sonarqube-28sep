@@ -1,0 +1,68 @@
+{% # theme-check-disable %}
+{%- unless settings.type_body_font.system? -%}
+  <link
+    rel="preload"
+    as="font"
+    href="{{ settings.type_body_font | font_url }}"
+    type="font/woff2"
+    crossorigin
+    fetchpriority="low"
+  >
+{%- endunless -%}
+{%- unless settings.type_subheading_font.system? -%}
+  <link
+    rel="preload"
+    as="font"
+    href="{{ settings.type_subheading_font | font_url }}"
+    type="font/woff2"
+    crossorigin
+    fetchpriority="low"
+  >
+{%- endunless -%}
+{%- unless settings.type_heading_font.system? -%}
+  <link
+    rel="preload"
+    as="font"
+    href="{{ settings.type_heading_font | font_url }}"
+    type="font/woff2"
+    crossorigin
+    fetchpriority="low"
+  >
+{%- endunless -%}
+{%- unless settings.type_accent_font.system? -%}
+  <link
+    rel="preload"
+    as="font"
+    href="{{ settings.type_accent_font | font_url }}"
+    type="font/woff2"
+    crossorigin
+    fetchpriority="low"
+  >
+{%- endunless -%}
+
+{%- comment -%} Custom brand fonts (assets/custom.css) — preloaded so headings using them don't flash/reflow late in the page load {%- endcomment -%}
+<link
+  rel="preload"
+  as="font"
+  href="https://cdn.shopify.com/s/files/1/0565/2928/9412/files/ESBuild-Regular.woff2"
+  type="font/woff2"
+  crossorigin
+  fetchpriority="low"
+>
+<link
+  rel="preload"
+  as="font"
+  href="https://cdn.shopify.com/s/files/1/0565/2928/9412/files/ESBuild-Semibold.woff2"
+  type="font/woff2"
+  crossorigin
+  fetchpriority="low"
+>
+<link
+  rel="preload"
+  as="font"
+  href="https://cdn.shopify.com/s/files/1/0565/2928/9412/files/00WagramDisplay-Regular.woff2"
+  type="font/woff2"
+  crossorigin
+  fetchpriority="low"
+>
+{% # theme-check-enable %}

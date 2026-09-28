@@ -1,0 +1,128 @@
+.shopify-section.section-wrapper:has(.tolstoy-carousel) {
+  overflow: hidden;
+}
+.shopify-section.section-wrapper:has(.tolstoy-carousel) tolstoy-carousel.tolstoy-carousel {
+  display: block;
+  margin-inline: -8px;
+}
+.tolstoy-carousel .tolstoy-carousel-container {
+  margin-top: 0 !important;
+}
+.tolstoy-carousel .tolstoy-carousel-videos-container {
+  min-height: 442px !important;
+}
+.tolstoy-carousel .tolstoy-carousel-tile {
+  height: auto !important;
+}
+.tolstoy-carousel .tolstoy-carousel-tile .tolstoy-carousel-video-container + div {
+  position: absolute !important;
+  bottom: 17px !important;
+  width: auto !important;
+  left: 15px;
+  right: 15px;
+  padding: 12.5px 34px 12.5px 10px !important;
+  background: #FFFFFF66 !important;
+  border: 1px solid #00000014 !important;
+  backdrop-filter: blur(38px);
+  border-radius: 15px !important;
+  max-height: unset !important;
+}
+.tolstoy-carousel .tolstoy-carousel-tile .tolstoy-product-tile,
+.tolstoy-carousel .tolstoy-product-tile-image+div {
+  padding: 0 !important;
+}
+.tolstoy-carousel .tolstoy-product-tile-image+div {
+  justify-content: center;
+}
+.tolstoy-carousel .tolstoy-product-tile-image {
+  width: 84px;
+  height: 84px;
+  border-radius: 0;
+}
+.tolstoy-carousel .tolstoy-product-tile-title {
+  letter-spacing: -.48px;
+}
+.tolstoy-carousel .tolstoy-product-tile-title + div:empty {
+  display: none !important;
+}
+.tolstoy-carousel .tolstoy-product-tile-subtitle.tolstoy-product-tile-price {
+  margin-top: 3px;
+  letter-spacing: -.34px;
+  display: flex;
+  gap: 4.26px;
+}
+.tolstoy-carousel .tolstoy-product-tile-subtitle.tolstoy-product-tile-price span {
+  font-size: 9.93px;
+  letter-spacing: -0.34px;
+  opacity: 0.3;
+  order: 1;
+}
+.tolstoy-carousel .tolstoy-product-tile-image + div > div {
+  flex: unset !important;
+}
+.tolstoy-carousel .tolstoy-carousel-tile .tolstoy-carousel-video-container+div.tolstoy-product-content:has(.tolstoy-product-tile-arrow[style*="display: none;"]) {
+  padding-right: 10px !important;
+}
+.tolstoy-carousel .tolstoy-product-tile-arrow[aria-expanded="false"] {
+  top: 50% !important;
+  transform: translateY(-50%);
+  right: 8px !important;
+}
+.tolstoy-carousel .tolstoy-carousel-tile .tolstoy-carousel-video-container+div[data-is-expanded="true"] {
+  min-height: unset !important;
+  top: 17px;
+}
+.tolstoy-carousel-progress-bar-container > div {
+  background: #E5E5E5 !important;
+  height: 6.89px !important;
+}
+.tolstoy-carousel-progress-bar-container > div > div {
+  background: #00000033 !important;
+  border-radius: 10.87px !important;
+  height: 6.89px !important;
+}
+.tolstoy-carousel-progress-bar-container {
+  max-width: 1375px;
+  width: calc(100vw - calc(var(--page-margin) * 2)) !important;
+  padding-left: 8px;
+}
+.shopify-section.section-wrapper:has(.tolstoy-carousel) .shopify-app-block:has(.tolstoy-carousel) {
+  width: calc(100% + calc(var(--page-margin) * 2));
+  margin-left: calc(var(--page-margin) * -1);
+}
+.shopify-section.section-wrapper:has(.tolstoy-carousel) tolstoy-carousel.tolstoy-carousel {
+  margin-inline: 0;
+}
+@media (min-width: 750px) {
+  .tolstoy-carousel .tolstoy-carousel-progress-bar-container {
+    display: none !important;
+  }
+  .shopify-section.section-wrapper:has(.tolstoy-carousel) .shopify-app-block:has(.tolstoy-carousel) {
+    width: calc(100% + 8px);
+    margin-left: -8px;
+  }
+  .tolstoy-carousel .tolstoy-carousel-videos-container {
+    overflow-x: visible !important;
+  }
+}
+@media (max-width: 749px) {
+  .section-content-wrapper[data-testid="section-content"]:has(.section-header.content-hide) {
+    gap: 30px;
+  }
+  .section-header.content-hide div.text-block.custom-font-size[style*="--font-size: 1.25rem;"] {
+    display: none;
+  }
+  .section-header.content-hide h2 {
+    text-align: center;
+  }
+  .tolstoy-carousel .tolstoy-carousel-tile,
+  .tolstoy-carousel .tolstoy-carousel-video-container {
+    height: 100% !important;
+  }
+  .tolstoy-carousel .tolstoy-carousel-videos-container {
+    margin-bottom: 30px !important;
+  }
+  [data-template="index"] .section-content-wrapper[data-testid=section-content]:has(.tolstoy-carousel) {
+    padding-bottom: 0;
+  }
+}

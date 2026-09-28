@@ -1,0 +1,63 @@
+{%- doc -%}
+  Intended for use in a block similar to the button block.
+
+  @param {string} link - link to render
+  @param {object} [block] - The block
+
+  @example
+  {% render 'button', link: '/collections/all' %}
+{%- enddoc -%}
+
+{% assign block_settings = block.settings %}
+{% if block_settings.label != blank %}
+<a
+  {% if link == blank %}
+    role="link"
+    aria-disabled="true"
+  {% else %}
+    href="{{ link }}"
+  {% endif %}
+  class="
+    size-style
+    {{ block_settings.style_class }}
+    {{ block_settings.style_class }}--{{ block.id }}
+  "
+  style="{% render 'size-style', settings: block_settings %}"
+  {%- if block_settings.open_in_new_tab -%}
+    target="_blank"
+    rel="noopener noreferrer"
+  {%- endif -%}
+  {{ block.shopify_attributes }}
+>
+  {% if block_settings.style_class == 'link' %}
+    <span>
+  {% endif %}
+  {{ block_settings.label }}
+  {% if block_settings.style_class == 'link' %}
+    </span>
+  {% endif %}
+
+  {% if block_settings.style_class == 'link' %}
+    <svg width="28" height="12" viewBox="0 0 28 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0 5.995H27M27 5.995L21.5 11.495M27 5.995L21.5 0.494995" stroke="black" stroke-width="1.4"/>
+    </svg>
+  {% endif %}
+
+  {% if block_settings.style_class == 'button-secondary' %}
+    <svg width="28" height="12" viewBox="0 0 28 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0 5.995H27M27 5.995L21.5 11.495M27 5.995L21.5 0.494995" stroke="black" stroke-width="1.4"/>
+    </svg>
+  {% endif %}
+</a>
+{% endif %}
+{% stylesheet %}
+  .link {
+    text-decoration: none;
+    text-decoration-color: currentcolor;
+
+    &:hover {
+      color: var(--color-primary-hover);
+      text-decoration-color: transparent;
+    }
+  }
+{% endstylesheet %}

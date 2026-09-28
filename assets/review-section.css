@@ -1,0 +1,75 @@
+body div.stamped-container[data-widget-style] {
+  margin: 0 !important;
+  max-width: 100%;
+}
+body .stamped-container {
+  color: inherit !important;
+  font-family: inherit !important;
+}
+.stamped-container ul.stamped-tabs li.active {
+  border-color: currentColor !important;
+  color: inherit !important;
+}
+.stamped-container .summary-rating-bar {
+  background: #E5E5E5;
+  border-radius: 30px;
+}
+.stamped-container .summary-rating-bar>div {
+  background: #F3A9A9 !important;
+  border-radius: 30px;
+  color: #fff !important;
+  font-size: 0;
+  padding: 1.4531px;
+}
+.stamped-container .summary-rating-count {
+  font-size: 17px;
+  color: inherit;
+  line-height: 1.118;
+  padding: 0;
+}
+#stamped-main-widget {
+  margin: 0;
+}
+.shopify-app-block:has(#stamped-main-widget) {
+  width: 100%;
+}
+.shopify-app-block:has(#stamped-main-widget) .fa-star,
+.shopify-app-block:has(#stamped-main-widget) .fa-star-o,
+.shopify-app-block:has(#stamped-main-widget) .fa-star-half-o,
+.shopify-app-block:has(#stamped-main-widget) .stamped-fa-star,
+.shopify-app-block:has(#stamped-main-widget) .stamped-fa-star-o,
+.shopify-app-block:has(#stamped-main-widget) .stamped-fa-star-half-o {
+  color: #F3A9A9 !important;
+}
+.stamped-container .summary-rating-title,
+.stamped-container .stamped-summary-ratings {
+  color: inherit;
+}
+.stamped-container .summary-rating-title {
+  font-size: 18px;
+  line-height: 1.068;
+}
+.stamped-container .summary-rating {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin-bottom: 10px;
+}
+@media (min-width: 768px) {
+  .stamped-container .stamped-summary {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+  .stamped-container .stamped-summary:before,
+  .stamped-container .stamped-summary:after {
+    display: none;
+  }
+  .stamped-container .stamped-summary-ratings {
+    width: 560px;
+    max-width: 100%;
+  }
+  .stamped-container .summary-rating-title {
+    text-align: right;
+  }
+}

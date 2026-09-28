@@ -1,0 +1,180 @@
+.footer-content .menu .menu__heading.h3,
+.footer-content rte-formatter.text-block.rte h3 {
+  font-size: calc(var(--font-h3--size) - 2px);
+  font-family: var(--font-body--family);
+  font-weight: var(--font-accent--weight);
+  line-height: 1;
+  text-transform: lowercase;
+}
+.footer-content .menu .menu__heading.h3 .menu__heading__default {
+  font-weight: inherit;
+}
+.footer-content .menu .details-content .menu__item.h5 {
+  font-size: calc(var(--font-h5--size) + 2px);
+  letter-spacing: 0.08px;
+}
+.footer-content .email-signup__input-group .email-signup__input::placeholder {
+  color: #A5ACA7;
+  text-transform: lowercase;
+}
+.footer-content .email-signup__input-group .email-signup__input {
+  font-size: calc(var(--font-paragraph--size) + 4px);
+  letter-spacing: -1%;
+  padding: calc(var(--padding-lg) - 4px) calc(var(--padding-3xl) - 4px);
+}
+.footer-content .email-signup__input-group .email-signup__button {
+  padding: var(--padding-lg) calc(var(--padding-3xl) - 4px);
+}
+.footer-content .email-signup__input-group:not(.email-signup__input-group--integrated):not(.email-signup__input-group--underline) {
+  gap: calc(var(--gap-lg) + 2px);
+}
+.footer-bottom .menu__heading {
+  display: none;
+}
+.section.footer-bottom {
+  border-top: 1px solid var(--color-border);
+}
+footer .section.footer-bottom .dropdown-localization__button {
+  background-color: var(--button-background-color);
+  color: var(--color-foreground);
+  font-family: var(--font-body--family);
+  font-weight: var(--font-accent--weight);
+  letter-spacing: 0.08px;
+  line-height: 1;
+  text-transform: var(--button-text-case-primary);
+  padding: 13px 17px 13px calc(var(--padding-3xl) - 4px);
+  margin: 0;
+}
+footer .section.footer-bottom .dropdown-localization__button:hover {
+  background: var(--color-primary-button-background);
+}
+.section.footer-bottom .dropdown-localization__button .icon-flag {
+  display: none;
+}
+.footer-bottom .details-content .list-unstyled {
+  display: flex;
+  flex-wrap: wrap;
+  grid-gap: var(--spacing--size);
+}
+.footer-bottom .details-content .list-unstyled .menu__item {
+  margin-block-start: 0;
+}
+.footer-bottom .menu:not(:has(.menu__heading--empty)) .details-content {
+  margin-block-start: 0;
+}
+.footer-bottom .menu {
+  width: auto;
+}
+.footer-bottom rte-formatter.text-block.rte p,
+.footer-bottom .details-content .menu__item a:not(:hover) {
+  opacity: .75;
+}
+.footer-bottom .dropdown-localization__button .svg-wrapper.icon-caret {
+  margin-left: 12px;
+}
+footer .footer-bottom dropdown-localization-component .localization-wrapper.right-bound {
+  right: auto;
+  left: 0;
+  top: auto;
+  bottom: 110%;
+}
+.footer-bottom .localization-form__list-item[aria-current=true] {
+  background: #fff;
+}
+.footer-content .dropdown-localization .dropdown-localization__button {
+  border: 1px solid #000000;
+  line-height: 1;
+  padding: 12px 17px 12px 21px;
+}
+footer dropdown-localization-component .localization-wrapper.right-bound {
+  right: auto;
+  left: 50%;
+  width: 280px;
+  transform: translateX(-50%);
+}
+footer localization-form-component {
+  width: 100%;
+}
+footer .logo-block__image-wrapper.logo-block__svg {
+  justify-content: center;
+}
+.footer-bottom .rte a {
+  text-decoration: none;
+}
+@media (min-width: 750px) and (max-width: 989px) {
+  .footer-content > .group-block > .group-block-content {
+    flex-wrap: wrap;
+  }
+  .footer-content>.group-block>.group-block-content>.group-block:has(.email-signup-block) {
+    width: 100%;
+  }
+}
+@media (min-width: 750px) {
+  .footer-content .menu .menu__heading.h3 {
+    padding: 0;
+  }
+  .footer-content .dropdown-localization {
+    display: none;
+  }
+  footer .footer-bottom dropdown-localization-component .localization-wrapper.right-bound {
+    left: 0;
+    transform: unset;
+  }
+}
+@media (max-width: 749px) {
+  .footer-content .menu .menu__heading.h3,
+  .footer-content rte-formatter.text-block.rte h3 {
+    color: #000000;
+    font-size: 16px;
+    text-transform: uppercase;
+    padding-block: 10px;
+  }
+  .footer-content summary .svg-wrapper svg {
+    width: 12.16px;
+    height: 12.16px;
+  }
+  .footer-content .menu:not(:has(.menu__heading--empty)) .details-content {
+    margin-top: 6px;
+  }
+  .footer-content .menu .details-content .menu__item+.menu__item {
+    margin-top: 12px;
+  }
+  .footer-content>.group-block>.group-block-content[style*="--gap: max(24px, calc(var(--gap-scale, 1.0) * 50px));"] {
+    gap: 40px;
+  }
+  .footer-content .logo-block {
+    max-height: 40px;
+  }
+  .footer-content .social-icons__wrapper:not(:has(div)) {
+    display: none;
+  }
+  .footer-content rte-formatter.text-block.rte h3 {
+    font-size: 30px;
+    color: #414141;
+    text-transform: lowercase;
+    padding-block: 0;
+  }
+  .footer-content rte-formatter.text-block.rte {
+    width: 100%;
+    align-items: center;
+  }
+  .footer-content rte-formatter.text-block.rte + .text-block p {
+    text-align: center;
+  }
+  body .email-signup__input-group:not(.email-signup__input-group--arrow):not(.email-signup__input-group--underline):not(.email-signup__input-group--integrated) {
+    flex-flow: row nowrap;
+  }
+  .email-signup__input-group .email-signup__button {
+    width: auto;
+  }
+  .footer-content .payment-icons__list {
+    gap: 10px;
+    justify-content: center;
+  }
+  body .footer-content {
+    padding-block: 48px 27px;
+  }
+  .shopify-section-group-footer-group .section.footer-bottom {
+    display: none;
+  }
+}

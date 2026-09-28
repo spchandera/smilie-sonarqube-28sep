@@ -1,0 +1,426 @@
+{% if section.settings.image != blank %}
+{% liquid
+  assign product = closest.product
+  if request.visual_preview_mode and product == blank
+    assign product = collections.all.products.first
+  endif
+%}
+
+<div class="section-background color-{{ section.settings.color_scheme }}"></div>
+
+<div
+  class="
+    section
+    section--{{ section.settings.section_width }}
+    section-hotspot-callouts
+    color-{{ section.settings.color_scheme }}
+    spacing-style
+    gap-style
+  "
+  style="
+    {% render 'spacing-style', settings: section.settings %}
+    {% render 'gap-style', value: 20 %}
+    --hotspot-dot-size: {{ section.settings.dot_size }}px;
+    --hotspot-dot-color: {{ section.settings.dot_color }};
+    --hotspot-line-color: {{ section.settings.line_color }};
+    --callout-gap: {{ section.settings.callout_gap }}px;
+    --callout-max-width: {{ section.settings.callout_width }}px;
+  "
+  data-testid="product-hotspot-callouts"
+>
+  <div class="section-hotspot-callouts__header">
+    {% if section.settings.subheading != blank %}
+      <p class="section-hotspot-callouts__subheading">{{ section.settings.subheading }}</p>
+    {% endif %}
+    {% if section.settings.heading != blank %}
+      <h2 class="section-hotspot-callouts__heading">{{ section.settings.heading }}</h2>
+    {% endif %}
+  </div>
+
+  <div class="section-hotspot-callouts__content">
+    <div class="hotspot-callouts-img">
+    {% if section.settings.image != blank %}
+      {% render 'image', image: section.settings.image, class: 'section-hotspot-callouts__image' %}
+    {% else %}
+      {{ 'hero-apparel-1' | placeholder_svg_tag: 'section-hotspot-callouts__image' }}
+    {% endif %}
+    </div>
+
+    <div class="hotspot-callouts-layer" aria-hidden="true" data-hotspot-group>
+      {% for block in section.blocks %}
+        {% liquid
+          assign bs = block.settings
+          assign block_side = bs.horizontal_position | default: 'left'
+
+          assign item_x = bs.horizontal_percent | default: 50
+          assign item_y = bs.vertical_percent | default: 50
+
+          assign item_x = item_x | plus: 0 | at_least: 0 | at_most: 100
+          assign item_y = item_y | plus: 0 | at_least: 0 | at_most: 100
+
+          if block_side != 'right'
+            assign block_side = 'left'
+          endif
+        -%}
+        
+        {% if bs.heading != blank or bs.description != blank %}
+          <details
+            class="hotspot-callout hotspot-callout--{{ block_side }}"
+            class="hotspot-callout hotspot-callout--{{ block_side }}"
+
+            style="--x: {{ item_x }}%; --y: {{ item_y }}%;"
+            {{ block.shopify_attributes }}
+          >
+            <summary class="hotspot-callout__summary">
+              <span class="hotspot-callout__dot">
+                <span class="svg-wrapper hotspot-callout__icon hotspot-callout__icon--plus">
+                  {{- 'icon-plus.svg' | inline_asset_content -}}
+                </span>
+                <span class="svg-wrapper hotspot-callout__icon hotspot-callout__icon--minus">
+                  {{- 'icon-minus.svg' | inline_asset_content -}}
+                </span>
+              </span>
+            </summary>
+            <div class="hotspot-callout__content">
+              <div class="hotspot-callout__content-wrap">
+              {% if bs.heading != blank %}
+                <h4 class="hotspot-callout__heading">{{ bs.heading }}</h4>
+              {% endif %}
+              {% if bs.description != blank %}
+                <div class="hotspot-callout__text">{{ bs.description }}</div>
+              {% endif %}
+              </div>
+            </div>
+          </details>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    <div class="hotspot-callouts-mobile">
+      <div class="hotspot-callouts-mobile__track">
+        {% for block in section.blocks %}
+          {% assign bs = block.settings %}
+          {% if bs.heading != blank or bs.description != blank %}
+            <div class="hotspot-callouts-mobile__card" {{ block.shopify_attributes }}>
+              {% if bs.heading != blank %}
+                <p class="hotspot-callouts-mobile__heading">{{ bs.heading }}</p>
+              {% endif %}
+              {% if bs.description != blank %}
+                <div class="hotspot-callouts-mobile__text rte">
+                  {{ bs.description }}
+                </div>
+              {% endif %}
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+      {% if section.settings.mobile_button_text != blank and section.settings.mobile_button_link != blank %}
+        <div class="hotspot-callouts-mobile__button">
+          <a class="button button-secondary" href="{{ section.settings.mobile_button_link }}">
+            <span>{{ section.settings.mobile_button_text }} </span>
+            <svg width="28" height="12" viewBox="0 0 28 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0 5.995H27M27 5.995L21.5 11.495M27 5.995L21.5 0.494995" stroke="black" stroke-width="1.4"></path>
+    </svg>
+          </a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<script>
+  (function () {
+    var sections = document.querySelectorAll('[data-testid="product-hotspot-callouts"]');
+    if (!sections.length) return;
+
+    sections.forEach(function (section) {
+      var group = section.querySelector('[data-hotspot-group]');
+      if (!group) return;
+
+      group.addEventListener('click', function (event) {
+        var summary = event.target.closest('summary');
+        if (!summary) return;
+        var details = summary.parentElement;
+        if (!details || details.tagName !== 'DETAILS') return;
+
+        if (!details.open) {
+          group.querySelectorAll('details[open]').forEach(function (openDetails) {
+            if (openDetails !== details) openDetails.removeAttribute('open');
+          });
+        }
+      });
+    });
+  })();
+
+  document.querySelectorAll('details.hotspot-callout').forEach(details => {
+  const oldSummary = details.querySelector('.hotspot-callout__summary');
+  const newSummary = oldSummary.cloneNode(true);
+  oldSummary.replaceWith(newSummary);
+
+  newSummary.addEventListener('click', function(e) {
+    e.preventDefault();
+
+    if (details.hasAttribute('open')) {
+      details.classList.add('is-closing');
+      setTimeout(() => {
+        details.removeAttribute('open');
+        details.classList.remove('is-closing');
+      }, 1500);
+    } else {
+      // pehle baaki sab band karo
+      document.querySelectorAll('details.hotspot-callout[open]').forEach(other => {
+        if (other !== details) {
+          other.classList.add('is-closing');
+          setTimeout(() => {
+            other.removeAttribute('open');
+            other.classList.remove('is-closing');
+          }, 1500);
+        }
+      });
+      // phir naya kholo
+      details.setAttribute('open', '');
+    }
+  });
+});
+</script>
+
+{% schema %}
+{
+  "name": "Product hotspot callouts",
+  "tag": "section",
+  "class": "section-hotspot-callouts",
+  "settings": [
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "★★★★★ Loved by thousands"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Don't just take our word for it"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Image"
+    },
+    {
+      "type": "header",
+      "content": "Hotspot style"
+    },
+    {
+      "type": "color",
+      "id": "dot_color",
+      "label": "Dot color",
+      "default": "#f1e87a"
+    },
+    {
+      "type": "color",
+      "id": "line_color",
+      "label": "Line color",
+      "default": "#707070"
+    },
+    {
+      "type": "range",
+      "id": "dot_size",
+      "label": "Dot size",
+      "min": 8,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "callout_gap",
+      "label": "Line length",
+      "min": 10,
+      "max": 120,
+      "step": 2,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "callout_width",
+      "label": "Callout width",
+      "min": 140,
+      "max": 420,
+      "step": 10,
+      "unit": "px",
+      "default": 260
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "Section width",
+      "options": [
+        {
+          "value": "narrow",
+          "label": "Narrow"
+        },
+        {
+          "value": "standard",
+          "label": "Standard"
+        },
+        {
+          "value": "wide",
+          "label": "Wide"
+        }
+      ],
+      "default": "standard"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "header",
+      "content": "Mobile button"
+    },
+    {
+      "type": "text",
+      "id": "mobile_button_text",
+      "label": "Button text"
+    },
+    {
+      "type": "url",
+      "id": "mobile_button_link",
+      "label": "Button link"
+    },
+    {
+      "type": "header",
+      "content": "Padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "Top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "Bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-start",
+      "label": "Left",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-end",
+      "label": "Right",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    }
+  ],
+  "blocks": [
+    {
+      "type": "callout",
+      "name": "Hotspot callout",
+      "settings": [
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading",
+          "default": "Near-Infrared Light (830nm)"
+        },
+        {
+          "type": "richtext",
+          "id": "description",
+          "label": "Description",
+          "default": "<p>Penetrates deeper layers to reduce inflammation and support long-term skin resilience.</p>"
+        },
+        {
+          "type": "text",
+          "id": "horizontal_position",
+          "label": "Side (left/right)",
+          "default": "left"
+        },
+        {
+          "type": "text",
+          "id": "horizontal_percent",
+          "label": "Horizontal % (0–100)",
+          "default": "50"
+        },
+        {
+          "type": "text",
+          "id": "vertical_percent",
+          "label": "Vertical % (0–100)",
+          "default": "50"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Product hotspot callouts",
+      "category": "Product",
+      "blocks": {
+        "callout-1": {
+          "type": "callout",
+          "settings": {
+            "horizontal_position": "left",
+            "horizontal_percent": "40",
+            "vertical_percent": "30"
+          }
+        },
+        "callout-2": {
+          "type": "callout",
+          "settings": {
+            "horizontal_position": "left",
+            "horizontal_percent": "35",
+            "vertical_percent": "65"
+          }
+        },
+        "callout-3": {
+          "type": "callout",
+          "settings": {
+            "horizontal_position": "right",
+            "horizontal_percent": "62",
+            "vertical_percent": "32"
+          }
+        },
+        "callout-4": {
+          "type": "callout",
+          "settings": {
+            "horizontal_position": "right",
+            "horizontal_percent": "64",
+            "vertical_percent": "65"
+          }
+        }
+      },
+      "block_order": ["callout-1", "callout-2", "callout-3", "callout-4"]
+    }
+  ]
+}
+{% endschema %}

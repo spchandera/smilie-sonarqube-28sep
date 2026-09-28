@@ -1,0 +1,231 @@
+.header[transparent]:not([data-sticky-state=active]):not(:has(.menu-list__link:is(:hover,[aria-expanded=true]))) .header__row {
+  border-bottom: 1px solid;
+}
+.header .header-actions__action {
+  width: 40px;
+  height: 40px;
+  align-items: center;
+}
+.header .header__column--right header-actions {
+  gap: 25px;
+  margin-inline-start: 0;
+  min-width: 105px;
+}
+.mega-menu .mega-menu__grid {
+  --menu-columns-desktop: 2;
+  --menu-columns-tablet: 2;
+  grid-template-columns: 326px 1fr;
+  gap: 0;
+}
+.mega-menu ul.mega-menu__list.list-unstyled {
+  --menu-columns-desktop: 1;
+  padding-block: 40px;
+}
+.mega-menu .mega-menu__content {
+  grid-column: 2;
+}
+.mega-menu__content-list.mega-menu__content-list--products {
+  display: block;
+}
+.mega-menu-promos:empty {
+  display: none;
+}
+.mega-menu-promos .mega-menu-promo-block {
+  display: none;
+}
+.mega-menu-promos .mega-menu-promo-block.is-active {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  padding: 40px 34px 40px 40px;
+}
+.mega-menu-promos .mega-menu-promo-item img {
+  border-radius: 23.31px;
+  backdrop-filter: blur(4.702747821807861px);
+}
+.header-menu .menu-list__submenu-inner {
+  background: #ededed66;
+  padding-bottom: 0;
+}
+.header-menu .mega-menu__column .mega-menu__link {
+  font-size: calc(var(--menu-child-font-size) + 2px);
+  font-weight: 400;
+  line-height: 1;
+  padding: 12px 40px 12px 40px;
+  letter-spacing: -1%;
+  display: block;
+  position: relative;
+}
+.header-menu .mega-menu__column .mega-menu__link:hover,
+.menu-drawer__menu .menu-drawer__menu-item--child:hover {
+  color: #F3A9A9;
+  font-weight: 600;
+}
+.header-menu .mega-menu__column .mega-menu__link:hover:before {
+  content: ' ';
+  position: absolute;
+  inset: -3px 0;
+  background: #fff;
+  border-radius: 30px;
+  pointer-events: none;
+  z-index: -1;
+}
+.header-menu .menu-list__list-item:not([slot=overflow]):after {
+  --header-padding: var(--padding-5xl);
+}
+.header .close-button.menu-drawer__close-button {
+  box-shadow: unset;
+}
+.menu-drawer__menu .menu-drawer__menu-item--child {
+  font-size: calc(var(--menu-child-font-size) - 2px);
+  font-weight: 400;
+}
+.menu-drawer__menu .menu-drawer__menu-item--mainlist {
+  font-size: var(--menu-child-font-size);
+  min-height: unset;
+}
+.header.is-scrolled[transparent] {
+  --color-foreground: rgb(0 0 0);
+  background: #fff;
+}
+.header.is-scrolled[transparent]:not([data-sticky-state=active]):not(:has(.menu-list__link:is(:hover,[aria-expanded=true]))) .header__row {
+  border-color: #fff;
+}
+.header.is-scrolled[transparent] .header-logo:has(.header-logo__image-container--inverse) .header-logo__image-container--original {
+  display: block;
+}
+.header.is-scrolled[transparent] .header-logo:has(.header-logo__image-container--inverse) .header-logo__image-container--inverse {
+  display: none;
+}
+.menu-drawer__footer .menu-drawer__footer-logo {
+  display: none;
+}
+.header-drawer .header__columns header-actions {
+  gap: 14px;
+}
+.header-drawer .search__button.field__button {
+  top: 50% !important;
+  transform: translateY(-50%);
+}
+.header-drawer .search__button.field__button svg {
+  width: 20px;
+  height: 20px;
+}
+.header-drawer .menu-drawer__menu .menu-drawer__menu-item--mainlist,
+.header-drawer .menu-drawer__menu-item {
+  font-size: calc(var(--menu-child-font-size) - 2px);
+  text-transform: lowercase;
+}
+.menu-drawer__menu .menu-drawer__back-button {
+  margin-block: 0 !important;
+}
+body .header .header__drawer {
+  justify-content: flex-start;
+}
+@media (min-width: 750px) {
+  .header .header__columns {
+    padding-block: 35.05px;
+  }
+}
+@media (max-width: 989px) {
+  .header .account-button__icon {
+    width: 29.57px;
+    height: 29.57px;
+  }
+  .header .header-actions__action:not(.account-button) .svg-wrapper {
+    width: 29.57px;
+    height: 29.57px;
+  }
+  .header .header-actions__action:not(.account-button) svg {
+    width: 29.57px;
+    height: 29.57px;
+  }
+  .header .header-actions__cart-icon .cart-bubble {
+    width: 16px;
+    top: 0;
+    right: -2px;
+  }
+  .header .header-actions__action {
+    width: 29.57px;
+    height: 29.57px;
+    overflow: visible;
+  }
+  .header .header-actions__cart-icon {
+    display: flex;
+  }
+  .header .header__column--right header-actions {
+    gap: 10px;
+    min-width: unset;
+  }
+  header #header-component[data-menu-style=drawer] .header__columns,
+  header .header__columns {
+    padding-inline: var(--page-margin);
+  }
+  .header[transparent]:not([data-sticky-state=active]):not(:has(.menu-list__link:is(:hover,[aria-expanded=true]))) .header__row {
+    border-bottom: 0;
+  }
+  .header .header__drawer {
+    justify-content: center;
+  }
+  .header .menu-drawer-container .header__icon--summary {
+    padding: 0;
+  }
+  .header .header__icon--summary .header-drawer-icon {
+    width: 20px;
+    height: auto;
+  }
+}
+/* custom css */
+.mega-menu__grid {
+  align-items: start;
+}
+
+.mega-menu-right {
+  grid-column: span var(--menu-content-columns-tablet) / -1;
+}
+.menu-drawer__navigation .menu-drawer__menu-item .icon-caret,
+.menu-drawer__navigation .menu-drawer__back-button .icon-caret {
+  position: absolute;
+}
+.menu-drawer__navigation .menu-drawer__menu-item .icon-caret {
+  right: var(--padding-lg);
+  width: 24px !important;
+  height: 24px !important;
+  padding: 5px !important;
+  z-index: 1;
+}
+.menu-drawer__menu .menu-drawer__menu-item--mainlist {
+  padding-right: calc(var(--padding-lg) * 2.8);
+}
+.menu-drawer__menu .menu-drawer__back-button {
+  padding-left: calc(var(--padding-lg) * 3.2) !important;
+  position: relative;
+  padding-block: 16.8px !important;
+  line-height: 1.1;
+}
+.menu-drawer__menu .menu-drawer__back-button .icon-caret {
+  left: var(--padding-lg);
+  margin-right: 0;
+  width: 24px !important;
+  height: 24px !important;
+  padding: 5px !important;
+  z-index: 1;
+}
+.header-drawer .header__columns header-actions {
+  gap: 8px;
+}
+.header__drawer .menu-drawer .menu-drawer__header-top {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+}
+.header__drawer .menu-drawer .menu-drawer__header-top .menu-drawer__actions {
+  justify-content: flex-end;
+}
+.header__drawer .menu-drawer .menu-drawer__header-top .menu-drawer__actions .account-button.header-actions__action {
+  width: auto;
+}
+@media (min-width: 990px) {
+  .mega-menu-right {
+    grid-column: span var(--menu-content-columns-desktop) / -1;
+  }
+}

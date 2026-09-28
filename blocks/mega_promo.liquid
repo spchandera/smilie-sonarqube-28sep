@@ -1,0 +1,81 @@
+{%- comment -%}
+  Mega Menu Promo Block - 4 Items
+{%- endcomment -%}
+
+{% comment %} {%- assign block_handle = block.settings.menu_handle | handleize -%} {% endcomment %}
+
+{%- comment -%}
+  Convert the input handle. If it is '-' or blank, we force it to 'default'.
+{%- endcomment -%}
+{%- assign raw_handle = block.settings.menu_handle | strip -%}
+{%- if raw_handle == '-' or raw_handle == blank -%}
+  {%- assign block_handle = 'default' -%}
+{%- else -%}
+  {%- assign block_handle = raw_handle | handleize -%}
+{%- endif -%}
+
+<div
+  class="mega-menu-promo-block"
+  data-handle="{{ block_handle }}"
+  data-promo-handle="{{ block_handle }}"
+  {{ block.shopify_attributes }}
+>
+  
+  {%- for i in (1..4) -%}
+    {%- capture image_id -%}promo_image_{{ i }}{%- endcapture -%}
+    {%- capture title_id -%}promo_title_{{ i }}{%- endcapture -%}
+    {%- capture link_id -%}promo_link_{{ i }}{%- endcapture -%}
+    
+    {%- assign promo_image = block.settings[image_id] -%}
+    {%- assign promo_title = block.settings[title_id] -%}
+    {%- assign promo_link = block.settings[link_id] -%}
+
+    {%- if promo_image != blank -%}
+      <div class="mega-menu-promo-item">
+        <a href="{{ promo_link | default: '#' }}">
+          <img src="{{ promo_image | image_url: width: 400 }}" alt="{{ promo_title }}" style="width:100%; height:auto;">
+          {%- if promo_title != blank -%}
+            <div class="promo-title">{{ promo_title }}</div>
+          {%- endif -%}
+        </a>
+      </div>
+    {%- endif -%}
+  {%- endfor -%}
+</div>
+
+{% schema %}
+{
+  "name": "Mega Menu Promo",
+  "settings": [
+    {
+      "type": "text",
+      "id": "menu_handle",
+      "label": "Attach to Menu (Parent Handle)"
+    },
+    { "type": "header", "content": "Promo 1" },
+    { "type": "image_picker", "id": "promo_image_1", "label": "Image 1" },
+    { "type": "text", "id": "promo_title_1", "label": "Title 1" },
+    { "type": "url", "id": "promo_link_1", "label": "Link 1" },
+    
+    { "type": "header", "content": "Promo 2" },
+    { "type": "image_picker", "id": "promo_image_2", "label": "Image 2" },
+    { "type": "text", "id": "promo_title_2", "label": "Title 2" },
+    { "type": "url", "id": "promo_link_2", "label": "Link 2" },
+    
+    { "type": "header", "content": "Promo 3" },
+    { "type": "image_picker", "id": "promo_image_3", "label": "Image 3" },
+    { "type": "text", "id": "promo_title_3", "label": "Title 3" },
+    { "type": "url", "id": "promo_link_3", "label": "Link 3" },
+    
+    { "type": "header", "content": "Promo 4" },
+    { "type": "image_picker", "id": "promo_image_4", "label": "Image 4" },
+    { "type": "text", "id": "promo_title_4", "label": "Title 4" },
+    { "type": "url", "id": "promo_link_4", "label": "Link 4" }
+  ],
+  "presets": [
+    {
+      "name": "Mega Menu Promo"
+    }
+  ]
+}
+{% endschema %}

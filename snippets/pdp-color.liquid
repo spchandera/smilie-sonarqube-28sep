@@ -1,0 +1,14 @@
+{%- assign color_scheme = product.metafields.custom.pdp_color_schema.value -%}
+
+{%- case color_scheme -%}
+  {%- when 'Oral Care' -%}
+    #e8f5eb80
+  {%- when 'Face Care' -%}
+    #f3a9a980
+  {%- when 'Body Care' -%}
+    #d6def680
+  {%- when 'Hair Care' -%}
+    #eef0ce80
+  {%- else -%}
+    #e8f5eb80
+{%- endcase -%}

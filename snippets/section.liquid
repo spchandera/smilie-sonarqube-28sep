@@ -1,0 +1,242 @@
+{%- doc -%}
+  Renders a wrapper section
+
+  @param {section} section - The section object
+  @param {string} children - The children of the section
+{%- enddoc -%}
+
+{% capture color_scheme %}
+  {%- render 'color-schema' -%}
+{% endcapture %}
+
+{%- unless section.settings.color_scheme_source == 'true' -%}
+  {% assign color_scheme = section.settings.color_scheme %}
+{%- endunless %}
+
+<div class="section-background color-{{ color_scheme | strip }}"></div>
+<div
+  class="section section--{{ section.settings.section_width }} color-{{ color_scheme | strip }} {% if section.settings.custom_class %} {{ section.settings.custom_class }} {% endif %}"
+  data-testid="ui-test-section"
+
+  {% if request.visual_preview_mode %}
+    data-shopify-visual-preview
+  {% endif %}
+
+  style="
+    {% if section.settings.section_height == 'custom' %}
+      --section-min-height: {{ section.settings.section_height_custom }}svh;
+    {% elsif section.settings.section_height == 'full-screen' %}
+      --section-min-height: 100svh;
+    {% elsif section.settings.section_height != '' %}
+      --section-min-height: var(--section-height-{{ section.settings.section_height }});
+    {% endif %}
+
+    {% if section.settings.section_height != '' %}
+     --section-preview-height: 600px;
+     {% endif %}
+  "
+>
+  <div class="custom-section-background">
+    {% render 'background-media',
+      background_media: section.settings.background_media,
+      background_video: section.settings.video,
+      background_video_position: section.settings.video_position,
+      background_image: section.settings.background_image,
+      background_image_position: section.settings.background_image_position
+    %}
+  </div>
+
+  <div
+    class="border-style custom-section-content"
+    style="{% render 'border-override', settings: section.settings %}"
+  >
+    {% if section.settings.toggle_overlay %}
+      {% render 'overlay', settings: section.settings, layer: '0' %}
+    {% endif %}
+
+    <div
+      class="
+        spacing-style
+        layout-panel-flex
+        layout-panel-flex--{{ section.settings.content_direction }}
+        section-content-wrapper
+        {% if section.settings.vertical_on_mobile %} mobile-column{% endif %}
+      "
+      style="
+        {% render 'layout-panel-style', settings: section.settings %}
+        {% render 'spacing-style', settings: section.settings %}
+      "
+      data-testid="section-content"
+    >
+      {{ children }}
+    </div>
+  </div>
+</div>
+{% assign faq_q1 = product.metafields.custom.pdp_bottom_faq_q1 %}
+{% assign faq_a1 = product.metafields.custom.pdp_bottom_faq_a1 %}
+{% assign faq_q2 = product.metafields.custom.pdp_bottom_faq_q2 %}
+{% assign faq_a2 = product.metafields.custom.pdp_bottom_faq_a2 %}
+{% assign faq_q3 = product.metafields.custom.pdp_bottom_faq_q3 %}
+{% assign faq_a3 = product.metafields.custom.pdp_bottom_faq_a3 %}
+{% assign faq_q4 = product.metafields.custom.pdp_bottom_faq_q4 %}
+{% assign faq_a4 = product.metafields.custom.pdp_bottom_faq_a4 %}
+{% if faq_q1 == blank and faq_a1 == blank
+  and faq_q2 == blank and faq_a2 == blank
+  and faq_q3 == blank and faq_a3 == blank
+  and faq_q4 == blank and faq_a4 == blank %}
+
+  <style>
+    .pdp-bottom-faq-wrapper {
+      display: none;
+    }
+  </style>
+
+{% endif %}
+{% if product.metafields.custom.pdp_key_benefit_feature_main_image == blank and product.metafields.custom.pdp_key_benefit_feature_heading == blank %}
+<style>
+  .icon-with-text-img.pdp{
+      display: none;
+  }
+</style>
+{% endif %} 
+{% assign mf = product.metafields.custom %}
+
+{% if mf.benefit_1_icon == blank and mf.benefit_1_title == blank and mf.benefit_1_description == blank
+  and mf.benefit_2_icon == blank and mf.benefit_2_title == blank and mf.benefit_2_description == blank
+  and mf.benefit_3_icon == blank and mf.benefit_3_title == blank and mf.benefit_3_description == blank
+  and mf.benefit_4_icon == blank and mf.benefit_4_title == blank and mf.benefit_4_description == blank %}
+
+<style>
+  .icon-with-text-img .group-block.spacing-style.mobile-slider.pdp {
+    display: none !important;
+  }
+</style>
+
+{% endif %}
+{% assign mf = product.metafields.custom %}
+
+{% assign s1 = mf.difference_session_1 | strip_html | strip %}
+{% assign s2 = mf.difference_session_2 | strip_html | strip %}
+{% assign s3 = mf.difference_session_3 | strip_html | strip %}
+{% assign s4 = mf.difference_session_4 | strip_html | strip %}
+
+<style>
+  {% if s1 == blank %}
+    .difference_session_wrapper:nth-of-type(1) {
+      display: none !important;
+    }
+  {% endif %}
+
+  {% if s2 == blank %}
+    .difference_session_wrapper:nth-of-type(2) {
+      display: none !important;
+    }
+  {% endif %}
+
+  {% if s3 == blank %}
+    .difference_session_wrapper:nth-of-type(3) {
+      display: none !important;
+    }
+  {% endif %}
+
+  {% if s4 == blank %}
+    .difference_session_wrapper:nth-of-type(4) {
+      display: none !important;
+    }
+  {% endif %}
+</style>
+{% assign mf = product.metafields.custom %}
+
+{% if mf.difference_main_image == blank and mf.difference_image_content == blank %}
+  <style>
+    .how-use-wrap {
+      display: none !important;
+    }
+  </style>
+{% endif %}
+{% assign mf = product.metafields.custom %}
+
+{% if mf.difference_video == blank %}
+  <style>
+    .difference_video_wrapper {
+      display: none !important;
+    }
+  </style>
+{% endif %}
+{% assign mf = product.metafields.custom %}
+
+{% if mf.difference_secondary_image == blank or mf.difference_secondary_image.value == blank %}
+  <style>
+    comparison-slider-component + .image-block {
+      display: none !important;
+    }
+  </style>
+{% endif %}
+{% assign mf = product.metafields.custom %}
+
+{% if mf.difference_session_1 == blank 
+  and mf.difference_session_2 == blank 
+  and mf.difference_session_3 == blank 
+  and mf.difference_session_4 == blank %}
+
+  <style>
+    .smilie-diffe-section {
+      display: none !important;
+    }
+  </style>
+
+{% endif %}
+{% assign q1 = collection.metafields.custom.faq_question1 %}
+{% assign a1 = collection.metafields.custom.faq_answer1 %}
+
+{% assign q2 = collection.metafields.custom.faq_question2 %}
+{% assign a2 = collection.metafields.custom.faq_answer2 %}
+
+{% assign q3 = collection.metafields.custom.faq_question3 %}
+{% assign a3 = collection.metafields.custom.faq_answer3 %}
+
+{% assign q4 = collection.metafields.custom.faq_question4 %}
+{% assign a4 = collection.metafields.custom.faq_answer4 %}
+
+{% if q1 == blank and a1 == blank
+  and q2 == blank and a2 == blank
+  and q3 == blank and a3 == blank
+  and q4 == blank and a4 == blank %}
+
+  <style>
+    .collection-faq-wrapper {
+      display: none !important;
+    }
+  </style>
+
+{% endif %}
+{% stylesheet %}
+  .section-wrapper {
+    --section-height-offset: 0px;
+  }
+
+  .section[data-shopify-visual-preview] {
+    min-height: var(--section-preview-height);
+    padding-top: 0;
+  }
+
+  .section[data-shopify-visual-preview] .custom-section-background {
+    display: none;
+  }
+
+  body:has(> #header-group > .header-section > #header-component[transparent]):not(
+      :has(> #header-group > .header-section + .shopify-section)
+    )
+    > main
+    > .section-wrapper:first-child {
+    --section-height-offset: var(--header-group-height, 0);
+  }
+
+  .custom-section-background {
+    grid-column: 1 / -1;
+  }
+
+  .custom-section-content {
+    z-index: var(--layer-flat);
+  }
+{% endstylesheet %}

@@ -1,0 +1,20 @@
+{%- if template.name == 'product' -%}
+  {%- assign color_scheme = product.metafields.custom.pdp_color_schema.value -%}
+
+{%- elsif template.name == 'collection' -%}
+  {%- assign color_scheme = collection.metafields.custom.color_schema.value -%}
+{%- endif -%}
+
+{%- case color_scheme -%}
+  {%- when 'Oral Care' -%}
+    scheme-20
+  {%- when 'Face Care' -%}
+    scheme-16
+  {%- when 'Body Care' -%}
+    scheme-19
+  {%- when 'Hair Care' -%}
+    scheme-21
+
+  {%- else -%}
+    {{ section.settings.color_scheme }}
+{%- endcase -%}

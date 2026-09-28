@@ -1,0 +1,789 @@
+{% doc %}
+  @prompt
+    A magazine-style editorial layout, This isnt quite right - this is for people who want to know how the product is going to work in easy steps, can you add a step above one - i'll make this a before you begin , remove the 0 from before you begin - its doesn't need a step number, Can you add in a step above cleanse your skin that says Before you get started - don't add a a number though
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-step-guide-{{ ai_gen_id }} {
+    display: block;
+    width: {{ block.settings.desktop_width_percent }}%;
+    max-width: 100%;
+    background-color: {{ block.settings.background_color }};
+    padding: {{ block.settings.padding_vertical }}px {{ block.settings.padding_horizontal }}px;
+  }
+
+  .ai-step-guide-container-{{ ai_gen_id }} {
+    max-width: {{ block.settings.max_width }}px;
+    margin: 0 auto;
+  }
+
+  .ai-step-guide-header-{{ ai_gen_id }} {
+    text-align: {{ block.settings.header_alignment }};
+    margin-bottom: {{ block.settings.header_spacing }}px;
+  }
+
+  .ai-step-guide-title-{{ ai_gen_id }} {
+    font-size: {{ block.settings.title_size }}px;
+    color: {{ block.settings.title_color }};
+    margin: 0 0 12px;
+    line-height: 1.2;
+  }
+
+  .ai-step-guide-description-{{ ai_gen_id }} {
+    font-size: {{ block.settings.description_size }}px;
+    color: {{ block.settings.text_color }};
+    margin: 0;
+    line-height: 1.5;
+    opacity: 0.8;
+  }
+
+  .ai-step-guide-steps-{{ ai_gen_id }} {
+    display: flex;
+    flex-direction: column;
+    gap: {{ block.settings.step_spacing }}px;
+  }
+
+  .ai-step-guide-step-{{ ai_gen_id }} {
+    display: grid;
+    grid-template-columns: {% if block.settings.layout == 'image-left' %}1fr 1.5fr{% elsif block.settings.layout == 'image-right' %}1.5fr 1fr{% else %}1fr{% endif %};
+    gap: {{ block.settings.content_gap }}px;
+    align-items: center;
+    background-color: {{ block.settings.step_background }};
+    padding: {{ block.settings.step_padding }}px;
+    border-radius: {{ block.settings.step_border_radius }}px;
+    border: {{ block.settings.step_border_width }}px solid {{ block.settings.step_border_color }};
+  }
+
+  .ai-step-guide-step-{{ ai_gen_id }}[data-has-number="true"]:nth-child(even) {
+    {% if block.settings.alternate_layout %}
+      grid-template-columns: {% if block.settings.layout == 'image-left' %}1.5fr 1fr{% elsif block.settings.layout == 'image-right' %}1fr 1.5fr{% else %}1fr{% endif %};
+    {% endif %}
+  }
+
+  .ai-step-guide-image-wrapper-{{ ai_gen_id }} {
+    position: relative;
+    width: 100%;
+  }
+
+  .ai-step-guide-step-{{ ai_gen_id }}[data-has-number="true"]:nth-child(even) .ai-step-guide-image-wrapper-{{ ai_gen_id }} {
+    {% if block.settings.alternate_layout and block.settings.layout != 'stacked' %}
+      order: {% if block.settings.layout == 'image-left' %}2{% else %}1{% endif %};
+    {% endif %}
+  }
+
+  .ai-step-guide-image-{{ ai_gen_id }} {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: {{ block.settings.image_border_radius }}px;
+  }
+
+  .ai-step-guide-placeholder-{{ ai_gen_id }} {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    background-color: #f4f4f4;
+    border-radius: {{ block.settings.image_border_radius }}px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .ai-step-guide-placeholder-{{ ai_gen_id }} svg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .ai-step-guide-content-{{ ai_gen_id }} {
+    position: relative;
+  }
+
+  .ai-step-guide-step-number-{{ ai_gen_id }} {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: {{ block.settings.number_size }}px;
+    height: {{ block.settings.number_size }}px;
+    background-color: {{ block.settings.number_background }};
+    color: {{ block.settings.number_color }};
+    border-radius: 50%;
+    font-size: {{ block.settings.number_font_size }}px;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+
+  .ai-step-guide-step-title-{{ ai_gen_id }} {
+    font-size: {{ block.settings.step_title_size }}px;
+    color: {{ block.settings.title_color }};
+    margin: 0 0 8px;
+    line-height: 1.3;
+  }
+
+  .ai-step-guide-step-text-{{ ai_gen_id }} {
+    font-size: {{ block.settings.step_text_size }}px;
+    color: {{ block.settings.text_color }};
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  .ai-step-guide-step-text-{{ ai_gen_id }} p {
+    margin: 0 0 0.8em;
+  }
+
+  .ai-step-guide-step-text-{{ ai_gen_id }} p:last-child {
+    margin-bottom: 0;
+  }
+
+  @media screen and (max-width: 749px) {
+    .ai-step-guide-{{ ai_gen_id }} {
+      padding: {{ block.settings.padding_vertical | times: 0.6 }}px {{ block.settings.padding_horizontal | times: 0.6 }}px;
+    }
+
+    .ai-step-guide-step-{{ ai_gen_id }},
+    .ai-step-guide-step-{{ ai_gen_id }}[data-has-number="true"]:nth-child(even) {
+      grid-template-columns: 1fr;
+    }
+
+    .ai-step-guide-image-wrapper-{{ ai_gen_id }},
+    .ai-step-guide-step-{{ ai_gen_id }}[data-has-number="true"]:nth-child(even) .ai-step-guide-image-wrapper-{{ ai_gen_id }} {
+      order: 1;
+    }
+
+    .ai-step-guide-content-{{ ai_gen_id }} {
+      order: 2;
+    }
+
+    .ai-step-guide-title-{{ ai_gen_id }} {
+      font-size: {{ block.settings.title_size | times: 0.7 }}px;
+    }
+
+    .ai-step-guide-step-title-{{ ai_gen_id }} {
+      font-size: {{ block.settings.step_title_size | times: 0.85 }}px;
+    }
+  }
+{% endstyle %}
+
+<step-by-step-guide-{{ ai_gen_id }} class="ai-step-guide-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+  <div class="ai-step-guide-container-{{ ai_gen_id }}">
+    {% if block.settings.show_header %}
+      <div class="ai-step-guide-header-{{ ai_gen_id }}">
+        {% if block.settings.title != blank %}
+          <h2 class="ai-step-guide-title-{{ ai_gen_id }}">{{ block.settings.title }}</h2>
+        {% endif %}
+        {% if block.settings.description != blank %}
+          <div class="ai-step-guide-description-{{ ai_gen_id }}">{{ block.settings.description }}</div>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <div class="ai-step-guide-steps-{{ ai_gen_id }}">
+      {% assign step_counter = 0 %}
+      {% for i in (0..7) %}
+        {% liquid
+          assign step_enabled_key = 'step_' | append: i | append: '_enabled'
+          assign step_title_key = 'step_' | append: i | append: '_title'
+          assign step_text_key = 'step_' | append: i | append: '_text'
+          assign step_image_key = 'step_' | append: i | append: '_image'
+
+          assign step_enabled = block.settings[step_enabled_key]
+          assign step_title = block.settings[step_title_key]
+          assign step_text = block.settings[step_text_key]
+          assign step_image = block.settings[step_image_key]
+          
+          assign show_number = false
+          if block.settings.show_numbers and i > 0
+            assign show_number = true
+          endif
+        %}
+
+        {% if step_enabled %}
+          <div class="ai-step-guide-step-{{ ai_gen_id }}" data-has-number="{% if show_number %}true{% else %}false{% endif %}">
+            {% if block.settings.layout != 'text-only' %}
+              <div class="ai-step-guide-image-wrapper-{{ ai_gen_id }}">
+                {% if step_image %}
+                  <img
+                    src="{{ step_image | image_url: width: 800 }}"
+                    alt="{{ step_image.alt | escape }}"
+                    loading="lazy"
+                    width="{{ step_image.width }}"
+                    height="{{ step_image.height }}"
+                    class="ai-step-guide-image-{{ ai_gen_id }}"
+                  >
+                {% else %}
+                  <div class="ai-step-guide-placeholder-{{ ai_gen_id }}">
+                    {{ 'product-apparel-1' | placeholder_svg_tag }}
+                  </div>
+                {% endif %}
+              </div>
+            {% endif %}
+
+            <div class="ai-step-guide-content-{{ ai_gen_id }}">
+              {% if show_number %}
+                {% assign step_counter = step_counter | plus: 1 %}
+                <div class="ai-step-guide-step-number-{{ ai_gen_id }}">{{ step_counter }}</div>
+              {% endif %}
+              {% if step_title != blank %}
+                <h3 class="ai-step-guide-step-title-{{ ai_gen_id }}">{{ step_title }}</h3>
+              {% endif %}
+              {% if step_text != blank %}
+                <div class="ai-step-guide-step-text-{{ ai_gen_id }}">{{ step_text }}</div>
+              {% endif %}
+            </div>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+</step-by-step-guide-{{ ai_gen_id }}>
+
+<script>
+  (function() {
+    class StepByStepGuide{{ ai_gen_id }} extends HTMLElement {
+      constructor() {
+        super();
+      }
+
+      connectedCallback() {
+        this.initSteps();
+      }
+
+      initSteps() {
+        const steps = this.querySelectorAll('.ai-step-guide-step-{{ ai_gen_id }}');
+        steps.forEach((step, index) => {
+          step.setAttribute('data-step', index);
+        });
+      }
+    }
+
+    customElements.define('step-by-step-guide-{{ ai_gen_id }}', StepByStepGuide{{ ai_gen_id }});
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Step by step guide",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "desktop_width_percent",
+      "label": "Desktop width",
+      "min": 50,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 100
+    },
+    {
+      "type": "range",
+      "id": "max_width",
+      "label": "Maximum content width",
+      "min": 600,
+      "max": 1200,
+      "step": 50,
+      "unit": "px",
+      "default": 900
+    },
+    {
+      "type": "select",
+      "id": "layout",
+      "label": "Layout",
+      "options": [
+        {
+          "value": "image-left",
+          "label": "Image left"
+        },
+        {
+          "value": "image-right",
+          "label": "Image right"
+        },
+        {
+          "value": "stacked",
+          "label": "Stacked"
+        },
+        {
+          "value": "text-only",
+          "label": "Text only"
+        }
+      ],
+      "default": "image-left"
+    },
+    {
+      "type": "checkbox",
+      "id": "alternate_layout",
+      "label": "Alternate image position",
+      "default": true,
+      "info": "Alternates image position for each step"
+    },
+    {
+      "type": "range",
+      "id": "padding_vertical",
+      "label": "Vertical padding",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "default": 50
+    },
+    {
+      "type": "range",
+      "id": "padding_horizontal",
+      "label": "Horizontal padding",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "default": 30
+    },
+    {
+      "type": "range",
+      "id": "step_spacing",
+      "label": "Space between steps",
+      "min": 20,
+      "max": 80,
+      "step": 5,
+      "unit": "px",
+      "default": 30
+    },
+    {
+      "type": "range",
+      "id": "content_gap",
+      "label": "Gap between image and text",
+      "min": 20,
+      "max": 80,
+      "step": 5,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background color",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "header",
+      "content": "Header"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_header",
+      "label": "Show header",
+      "default": true
+    },
+    {
+      "type": "inline_richtext",
+      "id": "title",
+      "label": "Title",
+      "default": "How to use"
+    },
+    {
+      "type": "textarea",
+      "id": "description",
+      "label": "Description",
+      "default": "Follow these simple steps to get the best results"
+    },
+    {
+      "type": "select",
+      "id": "header_alignment",
+      "label": "Header alignment",
+      "options": [
+        {
+          "value": "left",
+          "label": "Left"
+        },
+        {
+          "value": "center",
+          "label": "Center"
+        }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "range",
+      "id": "header_spacing",
+      "label": "Header spacing",
+      "min": 20,
+      "max": 80,
+      "step": 5,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "title_size",
+      "label": "Title size",
+      "min": 20,
+      "max": 56,
+      "step": 2,
+      "unit": "px",
+      "default": 32
+    },
+    {
+      "type": "color",
+      "id": "title_color",
+      "label": "Title color",
+      "default": "#000000"
+    },
+    {
+      "type": "range",
+      "id": "description_size",
+      "label": "Description size",
+      "min": 14,
+      "max": 22,
+      "step": 1,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#000000"
+    },
+    {
+      "type": "header",
+      "content": "Step style"
+    },
+    {
+      "type": "color",
+      "id": "step_background",
+      "label": "Step background",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "color",
+      "id": "step_border_color",
+      "label": "Step border color",
+      "default": "#E6E6E6"
+    },
+    {
+      "type": "range",
+      "id": "step_border_width",
+      "label": "Step border width",
+      "min": 0,
+      "max": 4,
+      "step": 1,
+      "unit": "px",
+      "default": 1
+    },
+    {
+      "type": "range",
+      "id": "step_border_radius",
+      "label": "Step border radius",
+      "min": 0,
+      "max": 30,
+      "step": 2,
+      "unit": "px",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "step_padding",
+      "label": "Step padding",
+      "min": 15,
+      "max": 50,
+      "step": 5,
+      "unit": "px",
+      "default": 30
+    },
+    {
+      "type": "range",
+      "id": "image_border_radius",
+      "label": "Image border radius",
+      "min": 0,
+      "max": 20,
+      "step": 2,
+      "unit": "px",
+      "default": 8
+    },
+    {
+      "type": "header",
+      "content": "Step numbers"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_numbers",
+      "label": "Show step numbers",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "number_size",
+      "label": "Number circle size",
+      "min": 30,
+      "max": 70,
+      "step": 5,
+      "unit": "px",
+      "default": 50
+    },
+    {
+      "type": "range",
+      "id": "number_font_size",
+      "label": "Number font size",
+      "min": 16,
+      "max": 32,
+      "step": 2,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "color",
+      "id": "number_background",
+      "label": "Number background",
+      "default": "#000F9F"
+    },
+    {
+      "type": "color",
+      "id": "number_color",
+      "label": "Number color",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "header",
+      "content": "Step text"
+    },
+    {
+      "type": "range",
+      "id": "step_title_size",
+      "label": "Step title size",
+      "min": 16,
+      "max": 32,
+      "step": 2,
+      "unit": "px",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "step_text_size",
+      "label": "Step text size",
+      "min": 14,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "header",
+      "content": "Before you get started"
+    },
+    {
+      "type": "checkbox",
+      "id": "step_0_enabled",
+      "label": "Enable before you get started",
+      "default": true
+    },
+    {
+      "type": "image_picker",
+      "id": "step_0_image",
+      "label": "Image"
+    },
+    {
+      "type": "text",
+      "id": "step_0_title",
+      "label": "Title",
+      "default": "Before you get started"
+    },
+    {
+      "type": "richtext",
+      "id": "step_0_text",
+      "label": "Description",
+      "default": "<p>Make sure you have everything you need before starting.</p>"
+    },
+    {
+      "type": "header",
+      "content": "Step 1"
+    },
+    {
+      "type": "checkbox",
+      "id": "step_1_enabled",
+      "label": "Enable step 1",
+      "default": true
+    },
+    {
+      "type": "image_picker",
+      "id": "step_1_image",
+      "label": "Image"
+    },
+    {
+      "type": "text",
+      "id": "step_1_title",
+      "label": "Title",
+      "default": "Cleanse your skin"
+    },
+    {
+      "type": "richtext",
+      "id": "step_1_text",
+      "label": "Description",
+      "default": "<p>Start with clean, dry skin. Gently cleanse your face and pat dry with a soft towel.</p>"
+    },
+    {
+      "type": "header",
+      "content": "Step 2"
+    },
+    {
+      "type": "checkbox",
+      "id": "step_2_enabled",
+      "label": "Enable step 2",
+      "default": true
+    },
+    {
+      "type": "image_picker",
+      "id": "step_2_image",
+      "label": "Image"
+    },
+    {
+      "type": "text",
+      "id": "step_2_title",
+      "label": "Title",
+      "default": "Apply the serum"
+    },
+    {
+      "type": "richtext",
+      "id": "step_2_text",
+      "label": "Description",
+      "default": "<p>Dispense 2-3 drops onto your fingertips and gently massage into your skin using upward circular motions.</p>"
+    },
+    {
+      "type": "header",
+      "content": "Step 3"
+    },
+    {
+      "type": "checkbox",
+      "id": "step_3_enabled",
+      "label": "Enable step 3",
+      "default": true
+    },
+    {
+      "type": "image_picker",
+      "id": "step_3_image",
+      "label": "Image"
+    },
+    {
+      "type": "text",
+      "id": "step_3_title",
+      "label": "Title",
+      "default": "Let it absorb"
+    },
+    {
+      "type": "richtext",
+      "id": "step_3_text",
+      "label": "Description",
+      "default": "<p>Allow the product to fully absorb for 1-2 minutes before applying any additional products.</p>"
+    },
+    {
+      "type": "header",
+      "content": "Step 4"
+    },
+    {
+      "type": "checkbox",
+      "id": "step_4_enabled",
+      "label": "Enable step 4",
+      "default": true
+    },
+    {
+      "type": "image_picker",
+      "id": "step_4_image",
+      "label": "Image"
+    },
+    {
+      "type": "text",
+      "id": "step_4_title",
+      "label": "Title",
+      "default": "Follow with moisturizer"
+    },
+    {
+      "type": "richtext",
+      "id": "step_4_text",
+      "label": "Description",
+      "default": "<p>Lock in the benefits by applying your favorite moisturizer to seal in hydration.</p>"
+    },
+    {
+      "type": "header",
+      "content": "Step 5"
+    },
+    {
+      "type": "checkbox",
+      "id": "step_5_enabled",
+      "label": "Enable step 5",
+      "default": false
+    },
+    {
+      "type": "image_picker",
+      "id": "step_5_image",
+      "label": "Image"
+    },
+    {
+      "type": "text",
+      "id": "step_5_title",
+      "label": "Title"
+    },
+    {
+      "type": "richtext",
+      "id": "step_5_text",
+      "label": "Description"
+    },
+    {
+      "type": "header",
+      "content": "Step 6"
+    },
+    {
+      "type": "checkbox",
+      "id": "step_6_enabled",
+      "label": "Enable step 6",
+      "default": false
+    },
+    {
+      "type": "image_picker",
+      "id": "step_6_image",
+      "label": "Image"
+    },
+    {
+      "type": "text",
+      "id": "step_6_title",
+      "label": "Title"
+    },
+    {
+      "type": "richtext",
+      "id": "step_6_text",
+      "label": "Description"
+    },
+    {
+      "type": "header",
+      "content": "Step 7"
+    },
+    {
+      "type": "checkbox",
+      "id": "step_7_enabled",
+      "label": "Enable step 7",
+      "default": false
+    },
+    {
+      "type": "image_picker",
+      "id": "step_7_image",
+      "label": "Image"
+    },
+    {
+      "type": "text",
+      "id": "step_7_title",
+      "label": "Title"
+    },
+    {
+      "type": "richtext",
+      "id": "step_7_text",
+      "label": "Description"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Step by step guide"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,739 @@
+{% liquid
+  assign product = closest.product
+  if request.visual_preview_mode and product == blank
+    assign product = collections.all.products.first
+  endif
+
+  assign bs = block.settings
+
+  # ── Metafield sources ───────────────────────────────────────────────────────
+  # Path A: configurable JSON metafield  (rich: label, quantity, subtitle, badge, discount_pct, corner_badge)
+  # Path B: configurable list metafield  (simple integer list → auto-labels)
+  # Path C: block settings fallback      (up to 6 fully configurable options)
+
+  assign mf_ns_options  = bs.options_mf_namespace | default: 'bundle'
+  assign mf_key_options = bs.options_mf_key        | default: 'options'
+  assign mf_ns_qty      = bs.qty_mf_namespace      | default: 'bundle'
+  assign mf_key_qty     = bs.qty_mf_key            | default: 'quantities'
+
+  assign mf_options    = product.metafields[mf_ns_options][mf_key_options].value
+  assign mf_quantities = product.metafields[mf_ns_qty][mf_key_qty].value
+
+  # ── Count active options ────────────────────────────────────────────────────
+  if mf_options != blank
+    assign option_count = mf_options.size
+  elsif mf_quantities != blank
+    assign option_count = mf_quantities.size
+  else
+    assign option_count = 0
+    if bs.opt1_label != blank
+      assign option_count = option_count | plus: 1
+    endif
+    if bs.opt2_label != blank
+      assign option_count = option_count | plus: 1
+    endif
+    if bs.opt3_label != blank
+      assign option_count = option_count | plus: 1
+    endif
+    if bs.opt4_label != blank
+      assign option_count = option_count | plus: 1
+    endif
+    if bs.opt5_label != blank
+      assign option_count = option_count | plus: 1
+    endif
+    if bs.opt6_label != blank
+      assign option_count = option_count | plus: 1
+    endif
+  endif
+%}
+
+<bundle-quantity-selector
+  class="bundle-quantity-selector spacing-style"
+  data-section-id="{{ section.id }}"
+  data-block-id="{{ block.id }}"
+  style="{% render 'spacing-style', settings: bs %}"
+  {{ block.shopify_attributes }}
+>
+  {%- if bs.heading != blank -%}
+    <p class="bundle-selector__heading">{{ bs.heading }}</p>
+  {%- endif -%}
+
+  <div
+    class="bundle-selector__options"
+    role="radiogroup"
+    aria-label="{{ bs.heading | default: 'Bundle options' }}"
+    data-option-count="{{ option_count }}"
+  >
+
+    {%- if mf_options != blank -%}
+      {%- comment -%}── Path A: rich JSON metafield ──{%- endcomment -%}
+      {%- for option in mf_options -%}
+        {%- assign qty_int = option.quantity | default: 1 | plus: 0 | at_least: 1 -%}
+        {%- assign base_price = product.price | times: qty_int -%}
+        {%- assign disc = option.discount_pct | default: 0 | plus: 0 -%}
+        {%- if disc > 0 -%}
+          {%- assign disc_amount = base_price | times: disc | divided_by: 100 -%}
+          {%- assign final_price = base_price | minus: disc_amount -%}
+        {%- else -%}
+          {%- assign final_price = base_price -%}
+        {%- endif -%}
+        <button
+          type="button"
+          class="bundle-selector__option{% if forloop.first %} bundle-selector__option--selected{% endif %}"
+          data-quantity="{{ qty_int }}"
+          role="radio"
+          aria-checked="{{ forloop.first }}"
+        >
+          {%- if option.corner_badge != blank -%}
+            <span class="bundle-selector__corner-badge">{{ option.corner_badge }}</span>
+          {%- endif -%}
+          <div class="bundle-selector__left">
+            <span class="bundle-selector__radio-circle"></span>
+            <strong class="bundle-selector__option-label">{{ option.label }}</strong>
+            {%- if option.badge != blank -%}
+              <span class="bundle-selector__badge">{{ option.badge }}</span>
+            {%- endif -%}
+          </div>
+          <div class="bundle-selector__right">
+            {%- if disc > 0 -%}
+              <span class="bundle-selector__compare-price">{{ base_price | money }}</span>
+            {%- endif -%}
+            <span class="bundle-selector__price">{{ final_price | money }}</span>
+          </div>
+        </button>
+      {%- endfor -%}
+
+    {%- elsif mf_quantities != blank -%}
+      {%- comment -%}── Path B: integer list metafield ──{%- endcomment -%}
+      {%- for qty in mf_quantities -%}
+        {%- assign qty_int = qty | plus: 0 -%}
+        {%- assign base_price = product.price | times: qty_int -%}
+        {%- if qty_int == 1 -%}
+          {%- assign auto_label = qty_int | append: ' ' | append: bs.unit_singular -%}
+        {%- else -%}
+          {%- assign auto_label = qty_int | append: ' ' | append: bs.unit_plural -%}
+        {%- endif -%}
+        <button
+          type="button"
+          class="bundle-selector__option{% if forloop.first %} bundle-selector__option--selected{% endif %}"
+          data-quantity="{{ qty_int }}"
+          role="radio"
+          aria-checked="{{ forloop.first }}"
+        >
+          <div class="bundle-selector__left">
+            <span class="bundle-selector__radio-circle"></span>
+            <strong class="bundle-selector__option-label">{{ auto_label }}</strong>
+          </div>
+          <div class="bundle-selector__right">
+            <span class="bundle-selector__price">{{ base_price | money }}</span>
+          </div>
+        </button>
+      {%- endfor -%}
+
+    {%- else -%}
+      {%- comment -%}── Path C: block settings fallback (up to 3 options) ──{%- endcomment -%}
+
+      {%- if bs.opt1_label != blank -%}
+        {%- assign qty1 = bs.opt1_quantity | default: 1 | plus: 0 | at_least: 1 -%}
+        {%- assign base_price1 = product.price | times: qty1 -%}
+        {%- assign disc1 = bs.opt1_discount_pct | default: 0 | plus: 0 -%}
+        {%- if disc1 > 0 -%}
+          {%- assign disc_amount1 = base_price1 | times: disc1 | divided_by: 100 -%}
+          {%- assign final_price1 = base_price1 | minus: disc_amount1 -%}
+        {%- else -%}
+          {%- assign final_price1 = base_price1 -%}
+        {%- endif -%}
+        <button
+          type="button"
+          class="bundle-selector__option bundle-selector__option--selected"
+          data-quantity="{{ bs.opt1_quantity | default: 1 }}"
+          role="radio"
+          aria-checked="true"
+        >
+          {%- if bs.opt1_corner_badge != blank -%}
+            <span class="bundle-selector__corner-badge">{{ bs.opt1_corner_badge }}</span>
+          {%- endif -%}
+          <div class="bundle-selector__left">
+            <span class="bundle-selector__radio-circle"></span>
+            <strong class="bundle-selector__option-label">{{ bs.opt1_label }}</strong>
+            {%- if bs.opt1_badge != blank -%}
+              <span class="bundle-selector__badge">{{ bs.opt1_badge }}</span>
+            {%- endif -%}
+          </div>
+          <div class="bundle-selector__right">
+            {%- if disc1 > 0 -%}
+              <span class="bundle-selector__compare-price">{{ base_price1 | money }}</span>
+            {%- endif -%}
+            <span class="bundle-selector__price">{{ final_price1 | money }}</span>
+          </div>
+        </button>
+      {%- endif -%}
+
+      {%- if bs.opt2_label != blank -%}
+        {%- assign qty2 = bs.opt2_quantity | default: 1 | plus: 0 | at_least: 1 -%}
+        {%- assign base_price2 = product.price | times: qty2 -%}
+        {%- assign disc2 = bs.opt2_discount_pct | default: 0 | plus: 0 -%}
+        {%- if disc2 > 0 -%}
+          {%- assign disc_amount2 = base_price2 | times: disc2 | divided_by: 100 -%}
+          {%- assign final_price2 = base_price2 | minus: disc_amount2 -%}
+        {%- else -%}
+          {%- assign final_price2 = base_price2 -%}
+        {%- endif -%}
+        <button
+          type="button"
+          class="bundle-selector__option"
+          data-quantity="{{ bs.opt2_quantity | default: 1 }}"
+          role="radio"
+          aria-checked="false"
+        >
+          {%- if bs.opt2_corner_badge != blank -%}
+            <span class="bundle-selector__corner-badge">{{ bs.opt2_corner_badge }}</span>
+          {%- endif -%}
+          <div class="bundle-selector__left">
+            <span class="bundle-selector__radio-circle"></span>
+            <strong class="bundle-selector__option-label">{{ bs.opt2_label }}</strong>
+            {%- if bs.opt2_badge != blank -%}
+              <span class="bundle-selector__badge">{{ bs.opt2_badge }}</span>
+            {%- endif -%}
+          </div>
+          <div class="bundle-selector__right">
+            {%- if disc2 > 0 -%}
+              <span class="bundle-selector__compare-price">{{ base_price2 | money }}</span>
+            {%- endif -%}
+            <span class="bundle-selector__price">{{ final_price2 | money }}</span>
+          </div>
+        </button>
+      {%- endif -%}
+
+      {%- if bs.opt3_label != blank -%}
+        {%- assign qty3 = bs.opt3_quantity | default: 1 | plus: 0 | at_least: 1 -%}
+        {%- assign base_price3 = product.price | times: qty3 -%}
+        {%- assign disc3 = bs.opt3_discount_pct | default: 0 | plus: 0 -%}
+        {%- if disc3 > 0 -%}
+          {%- assign disc_amount3 = base_price3 | times: disc3 | divided_by: 100 -%}
+          {%- assign final_price3 = base_price3 | minus: disc_amount3 -%}
+        {%- else -%}
+          {%- assign final_price3 = base_price3 -%}
+        {%- endif -%}
+        <button
+          type="button"
+          class="bundle-selector__option"
+          data-quantity="{{ bs.opt3_quantity | default: 1 }}"
+          role="radio"
+          aria-checked="false"
+        >
+          {%- if bs.opt3_corner_badge != blank -%}
+            <span class="bundle-selector__corner-badge">{{ bs.opt3_corner_badge }}</span>
+          {%- endif -%}
+          <div class="bundle-selector__left">
+            <span class="bundle-selector__radio-circle"></span>
+            <strong class="bundle-selector__option-label">{{ bs.opt3_label }}</strong>
+            {%- if bs.opt3_badge != blank -%}
+              <span class="bundle-selector__badge">{{ bs.opt3_badge }}</span>
+            {%- endif -%}
+          </div>
+          <div class="bundle-selector__right">
+            {%- if disc3 > 0 -%}
+              <span class="bundle-selector__compare-price">{{ base_price3 | money }}</span>
+            {%- endif -%}
+            <span class="bundle-selector__price">{{ final_price3 | money }}</span>
+          </div>
+        </button>
+      {%- endif -%}
+
+    {%- endif -%}
+  </div>
+</bundle-quantity-selector>
+
+{% javascript %}
+  class BundleQuantitySelectorElement extends HTMLElement {
+    connectedCallback() {
+      /** @type {NodeListOf<HTMLButtonElement>} */
+      this.optionButtons = this.querySelectorAll('.bundle-selector__option');
+
+      // Sync the theme's quantity input from the pre-selected card on page load
+      const preSelected = this.querySelector('.bundle-selector__option--selected');
+      if (preSelected) {
+        this._syncQuantity(preSelected.dataset.quantity || '1');
+      }
+
+      this.optionButtons.forEach((btn) => {
+        btn.addEventListener('click', this._onOptionClick.bind(this));
+      });
+      this._initSubscriptionSync();
+    }
+
+    /** @param {MouseEvent} event */
+    _onOptionClick(event) {
+      const selected = /** @type {HTMLButtonElement} */ (event.currentTarget);
+
+      // Deselect all
+      this.optionButtons.forEach((btn) => {
+        btn.classList.remove('bundle-selector__option--selected');
+        btn.setAttribute('aria-checked', 'false');
+      });
+
+      // Activate clicked card
+      selected.classList.add('bundle-selector__option--selected');
+      selected.setAttribute('aria-checked', 'true');
+
+      this._syncQuantity(selected.dataset.quantity || '1');
+    }
+
+    /**
+     * Updates the quantity input(s) inside the theme's buy-buttons product form
+     * so the theme's own ATC button submits the correct quantity.
+     * @param {string} qty
+     */
+    _syncQuantity(qty) {
+      const sectionId = this.dataset.sectionId;
+
+      // The theme's product form lives inside the Shopify section wrapper.
+      // buy-buttons.liquid uses: form id="BuyButtons-ProductForm-{{ section.id }}"
+      const sectionEl = document.getElementById('shopify-section-' + sectionId);
+      if (!sectionEl) return;
+
+      const form = sectionEl.querySelector('form[data-type="add-to-cart-form"]');
+      if (!form) return;
+
+      // 1. Update all hidden/visible quantity inputs inside the form.
+      // If none exist (quantity block removed), inject a hidden one so the
+      // add-to-cart form still receives the selected bundle quantity.
+      let quantityInputs = form.querySelectorAll('input[name="quantity"]');
+      if (!quantityInputs.length) {
+        const hiddenQty = document.createElement('input');
+        hiddenQty.type = 'hidden';
+        hiddenQty.name = 'quantity';
+        hiddenQty.value = qty;
+        form.appendChild(hiddenQty);
+        quantityInputs = [hiddenQty];
+      }
+      quantityInputs.forEach((input) => {
+        input.value = qty;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+
+      // 2. Also update the visible number input inside quantity-selector-component
+      //    so the +/- stepper UI stays in sync
+      const qtySelectorInput = form.querySelector(
+        'quantity-selector-component input[type="number"], ' +
+        'cart-quantity-selector-component input[type="number"]'
+      );
+      if (qtySelectorInput) {
+        qtySelectorInput.value = qty;
+        qtySelectorInput.dispatchEvent(new Event('change', { bubbles: true }));
+        qtySelectorInput.dispatchEvent(new Event('input',  { bubbles: true }));
+      }
+    }
+      _initSubscriptionSync() {
+  const sectionEl = document.getElementById('shopify-section-' + this.dataset.sectionId);
+  if (!sectionEl) return;
+
+  this.subscriptionRadios = sectionEl.querySelectorAll(
+    '.shopify_subscriptions_app_block input[type="radio"]'
+  );
+
+  if (!this.subscriptionRadios.length) return;
+
+  this.subscriptionRadios.forEach((radio) => {
+    radio.addEventListener('change', (e) => {
+      const type = radio.getAttribute('data-radio-type');
+
+      if (type === 'selling_plan' && radio.checked) {
+        this._forceOnePack();
+        this._toggleBundle(false); // disable others
+      }
+
+      if (type === 'one_time_purchase' && radio.checked) {
+        this._toggleBundle(true); // enable all
+      }
+    });
+  });
+}
+
+_forceOnePack() {
+  let firstOption = null;
+
+  this.optionButtons.forEach((btn) => {
+    const qty = btn.dataset.quantity;
+
+    if (qty === "1") {
+      firstOption = btn;
+    }
+
+    btn.classList.remove('bundle-selector__option--selected');
+    btn.setAttribute('aria-checked', 'false');
+  });
+
+  if (firstOption) {
+    firstOption.classList.add('bundle-selector__option--selected');
+    firstOption.setAttribute('aria-checked', 'true');
+
+    this._syncQuantity("1");
+  }
+}
+
+_toggleBundle(enable) {
+  this.optionButtons.forEach((btn) => {
+    const qty = btn.dataset.quantity;
+
+    if (qty !== "1") {
+      btn.style.pointerEvents = enable ? "auto" : "none";
+      btn.style.opacity = enable ? "1" : "0.5";
+    }
+  });
+}
+  }
+
+  if (!customElements.get('bundle-quantity-selector')) {
+    customElements.define('bundle-quantity-selector', BundleQuantitySelectorElement);
+  }
+{% endjavascript %}
+
+{% stylesheet %}
+  /* ─── Block wrapper ─────────────────────────────────────────── */
+  .bundle-quantity-selector {
+    width: 100%;
+  }
+
+  /* ─── Optional heading ──────────────────────────────────────── */
+  .bundle-selector__heading {
+    font-size: var(--font-size--sm);
+    font-weight: 600;
+    color: var(--color-foreground);
+    margin-block-start: 0;
+    margin-block-end: var(--gap-sm);
+  }
+
+  /* ─── Options list (stacked rows) ───────────────────────────── */
+  .bundle-selector__options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-block-end: 0;
+  }
+
+  /* ─── Individual option row ─────────────────────────────────── */
+  .bundle-selector__option {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px 20px;
+    border: 1.5px solid var(--color-border);
+    border-radius: 10px;
+    background-color: var(--color-background);
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+    transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+    font-family: inherit;
+    overflow: hidden;
+  }
+
+  .bundle-selector__option:hover:not(.bundle-selector__option--selected) {
+    border-color: rgb(var(--color-foreground-rgb) / 0.35);
+    box-shadow: 0 2px 6px rgb(0 0 0 / 0.06);
+  }
+
+  /* ── Selected state ── */
+  .bundle-selector__option--selected {
+    border: 2px solid var(--color-foreground);
+    background-color: var(--color-background);
+  }
+
+  /* ─── Left side: radio + label + save badge ─────────────────── */
+  .bundle-selector__left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* ─── Radio circle ──────────────────────────────────────────── */
+  .bundle-selector__radio-circle {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid rgb(var(--color-foreground-rgb) / 0.3);
+    position: relative;
+    transition: border-color 0.15s ease;
+  }
+
+  .bundle-selector__radio-circle::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: transparent;
+    transition: background 0.15s ease;
+  }
+
+  .bundle-selector__option--selected .bundle-selector__radio-circle {
+    border-color: var(--color-foreground);
+  }
+
+  .bundle-selector__option--selected .bundle-selector__radio-circle::after {
+    background: var(--color-foreground);
+  }
+
+  /* ─── Option label ──────────────────────────────────────────── */
+  .bundle-selector__option-label {
+    display: block;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--color-foreground);
+    line-height: 1.2;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+  }
+
+  /* ─── Save badge (lime, inline) ─────────────────────────────── */
+  .bundle-selector__badge {
+    display: inline-flex;
+    align-items: center;
+    background-color: #d0f06a;
+    color: #1a1a1a;
+    font-size: 0.625rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+    line-height: 1.5;
+  }
+
+  /* ─── Corner badge (e.g. "BEST VALUE") ─────────────────────── */
+  .bundle-selector__corner-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background-color: var(--color-foreground);
+    color: var(--color-background);
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 0 8px 0 8px;
+    white-space: nowrap;
+    line-height: 1.4;
+  }
+
+  /* ─── Right side: prices ────────────────────────────────────── */
+  .bundle-selector__right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .bundle-selector__compare-price {
+    font-size: 0.875rem;
+    color: rgb(var(--color-foreground-rgb) / 0.45);
+    text-decoration: line-through;
+    font-weight: 400;
+  }
+
+  .bundle-selector__price {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--color-foreground);
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Bundle Quantity Selector",
+  "tag": null,
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Place this block ABOVE the Buy Buttons block."
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Choose Your Bundle"
+    },
+    {
+      "type": "header",
+      "content": "Bundle Option 1 (fallback)"
+    },
+    {
+      "type": "text",
+      "id": "opt1_label",
+      "label": "Label",
+      "default": "1 Pack"
+    },
+    {
+      "type": "text",
+      "id": "opt1_quantity",
+      "label": "Quantity"
+    },
+    {
+      "type": "text",
+      "id": "opt1_discount_pct",
+      "label": "Discount %",
+      "info": "Enter 0–100. Connect to a metafield via the theme editor dynamic source (⚡) icon.",
+      "default": "0"
+    },
+    {
+      "type": "text",
+      "id": "opt1_badge",
+      "label": "Save badge text",
+      "info": "e.g. SAVE 5% — leave blank for no badge"
+    },
+    {
+      "type": "text",
+      "id": "opt1_corner_badge",
+      "label": "Corner badge text",
+      "info": "e.g. BEST VALUE — leave blank for none"
+    },
+    {
+      "type": "richtext",
+      "id": "opt1_subtitle",
+      "label": "Subtitle"
+    },
+    {
+      "type": "header",
+      "content": "Bundle Option 2 (fallback)"
+    },
+    {
+      "type": "text",
+      "id": "opt2_label",
+      "label": "Label",
+      "default": "2 Pack"
+    },
+    {
+      "type": "text",
+      "id": "opt2_quantity",
+      "label": "Quantity"
+    },
+    {
+      "type": "text",
+      "id": "opt2_discount_pct",
+      "label": "Discount %",
+      "info": "Enter 0–100. Connect to a metafield via the theme editor dynamic source (⚡) icon.",
+      "default": "5"
+    },
+    {
+      "type": "text",
+      "id": "opt2_badge",
+      "label": "Save badge text",
+      "default": "SAVE 5%"
+    },
+    {
+      "type": "text",
+      "id": "opt2_corner_badge",
+      "label": "Corner badge text",
+      "info": "e.g. BEST VALUE — leave blank for none"
+    },
+    {
+      "type": "richtext",
+      "id": "opt2_subtitle",
+      "label": "Subtitle"
+    },
+    {
+      "type": "header",
+      "content": "Bundle Option 3 (fallback)"
+    },
+    {
+      "type": "text",
+      "id": "opt3_label",
+      "label": "Label",
+      "default": "3 Pack"
+    },
+    {
+      "type": "text",
+      "id": "opt3_quantity",
+      "label": "Quantity"
+    },
+    {
+      "type": "text",
+      "id": "opt3_discount_pct",
+      "label": "Discount %",
+      "info": "Enter 0–100. Connect to a metafield via the theme editor dynamic source (⚡) icon.",
+      "default": "10"
+    },
+    {
+      "type": "text",
+      "id": "opt3_badge",
+      "label": "Save badge text",
+      "default": "SAVE 10%"
+    },
+    {
+      "type": "text",
+      "id": "opt3_corner_badge",
+      "label": "Corner badge text",
+      "default": "BEST VALUE"
+    },
+    {
+      "type": "richtext",
+      "id": "opt3_subtitle",
+      "label": "Subtitle"
+    },
+    {
+      "type": "header",
+      "content": "Padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "Top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "Bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-start",
+      "label": "Left",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-end",
+      "label": "Right",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    }
+  ],
+  "presets": [
+    {
+      "name": "Bundle Quantity Selector",
+      "category": "Product"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,6 @@
+.announcement-bar__slide[style*="--font-weight: var(--font-accent--weight);"] .announcement-bar__text {
+  font-weight: 600;
+}
+.announcement-bar__slide[style*="--letter-spacing: var(--letter-spacing--body-loose);"] .announcement-bar__text {
+  letter-spacing: 10%;
+}

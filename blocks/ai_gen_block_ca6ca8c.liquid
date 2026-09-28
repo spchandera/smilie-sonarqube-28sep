@@ -1,0 +1,228 @@
+{% doc %}
+  @prompt
+    Create a step-by-step guide block for the Collagen Peptide Micro-Infusion System where each step can have a heading, description text, and optionally an image or an uploaded video. Include an intro step "How to open the lid" with a small embedded video that appears before the "Before you get started" step, with the video kept compact (not full width)., can you make the into video the same size as the others
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-peptide-guide-{{ ai_gen_id }} {
+    display: block;
+    width: {{ block.settings.desktop_width_percent }}%;
+    max-width: 100%;
+    margin-inline: auto;
+    color: #171717;
+  }
+
+  .ai-peptide-guide-{{ ai_gen_id }}__heading {
+    margin: 0 0 24px;
+    font-size: clamp(24px, 3vw, 36px);
+    line-height: 1.15;
+    color: #171717;
+  }
+
+  .ai-peptide-guide-{{ ai_gen_id }}__steps {
+    display: grid;
+    gap: 16px;
+  }
+
+  .ai-peptide-guide-{{ ai_gen_id }}__step {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(180px, 34%);
+    gap: 24px;
+    align-items: center;
+    padding: 22px;
+    border: 1px solid #dedede;
+    border-radius: 12px;
+    background: #fff;
+  }
+
+  .ai-peptide-guide-{{ ai_gen_id }}__step--intro {
+    background: #f7f8f8;
+  }
+
+  .ai-peptide-guide-{{ ai_gen_id }}__step-copy { min-width: 0; }
+
+  .ai-peptide-guide-{{ ai_gen_id }}__step-number {
+    display: block;
+    margin-bottom: 8px;
+    color: #555;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+
+  .ai-peptide-guide-{{ ai_gen_id }}__step-title {
+    margin: 0 0 8px;
+    font-size: 20px;
+    line-height: 1.3;
+    color: #171717;
+  }
+
+  .ai-peptide-guide-{{ ai_gen_id }}__description {
+    color: #3f3f3f;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .ai-peptide-guide-{{ ai_gen_id }}__description > :first-child { margin-top: 0; }
+  .ai-peptide-guide-{{ ai_gen_id }}__description > :last-child { margin-bottom: 0; }
+
+  .ai-peptide-guide-{{ ai_gen_id }}__media {
+    width: 100%;
+    overflow: hidden;
+    border-radius: 8px;
+    background: #eceeee;
+  }
+
+  .ai-peptide-guide-{{ ai_gen_id }}__media img,
+  .ai-peptide-guide-{{ ai_gen_id }}__media video {
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+  }
+
+  .ai-peptide-guide-{{ ai_gen_id }}__media--video {
+    aspect-ratio: 4 / 3;
+  }
+
+  .ai-peptide-guide-{{ ai_gen_id }}__media--video video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .ai-peptide-guide-{{ ai_gen_id }}__placeholder {
+    aspect-ratio: 4 / 3;
+    display: grid;
+    place-items: center;
+    position: relative;
+  }
+
+  .ai-peptide-guide-{{ ai_gen_id }}__placeholder svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    color: #777;
+  }
+
+  .ai-peptide-guide-{{ ai_gen_id }}__empty {
+    position: absolute;
+    inset-inline: 10px;
+    bottom: 10px;
+    color: #333;
+    font-size: 12px;
+    text-align: center;
+  }
+
+  @media screen and (max-width: 749px) {
+    .ai-peptide-guide-{{ ai_gen_id }}__step,
+    .ai-peptide-guide-{{ ai_gen_id }}__step--intro {
+      grid-template-columns: 1fr;
+      gap: 16px;
+      padding: 18px;
+    }
+  }
+{% endstyle %}
+
+<div class="ai-peptide-guide-{{ ai_gen_id }}" style="width: {{ block.settings.desktop_width_percent }}%;" {{ block.shopify_attributes }}>
+  {% if block.settings.guide_title != blank %}
+    <h2 class="ai-peptide-guide-{{ ai_gen_id }}__heading">{{ block.settings.guide_title | escape }}</h2>
+  {% endif %}
+  <div class="ai-peptide-guide-{{ ai_gen_id }}__steps">
+    <article class="ai-peptide-guide-{{ ai_gen_id }}__step ai-peptide-guide-{{ ai_gen_id }}__step--intro">
+      <div class="ai-peptide-guide-{{ ai_gen_id }}__step-copy">
+        <span class="ai-peptide-guide-{{ ai_gen_id }}__step-number">Intro</span>
+        <h3 class="ai-peptide-guide-{{ ai_gen_id }}__step-title">{{ block.settings.lid_heading | escape }}</h3>
+        {% if block.settings.lid_description != blank %}<div class="ai-peptide-guide-{{ ai_gen_id }}__description">{{ block.settings.lid_description }}</div>{% endif %}
+      </div>
+      {% if block.settings.lid_video != blank %}
+        <div class="ai-peptide-guide-{{ ai_gen_id }}__media ai-peptide-guide-{{ ai_gen_id }}__media--video">
+          {{ block.settings.lid_video | video_tag: controls: true, preload: 'metadata' }}
+        </div>
+      {% else %}
+        <div class="ai-peptide-guide-{{ ai_gen_id }}__media ai-peptide-guide-{{ ai_gen_id }}__media--video ai-peptide-guide-{{ ai_gen_id }}__placeholder">
+          {{ 'image' | placeholder_svg_tag }}
+          <span class="ai-peptide-guide-{{ ai_gen_id }}__empty">Add a short lid-opening video</span>
+        </div>
+      {% endif %}
+    </article>
+
+    {% for i in (1..5) %}
+      {% liquid
+        assign heading_key = 'step_' | append: i | append: '_heading'
+        assign description_key = 'step_' | append: i | append: '_description'
+        assign image_key = 'step_' | append: i | append: '_image'
+        assign video_key = 'step_' | append: i | append: '_video'
+        assign step_heading = block.settings[heading_key]
+        assign step_description = block.settings[description_key]
+        assign step_image = block.settings[image_key]
+        assign step_video = block.settings[video_key]
+      %}
+      {% if step_heading != blank or step_description != blank or step_image != blank or step_video != blank %}
+        <article class="ai-peptide-guide-{{ ai_gen_id }}__step">
+          <div class="ai-peptide-guide-{{ ai_gen_id }}__step-copy">
+            <span class="ai-peptide-guide-{{ ai_gen_id }}__step-number">Step {{ i }}</span>
+            {% if step_heading != blank %}<h3 class="ai-peptide-guide-{{ ai_gen_id }}__step-title">{{ step_heading | escape }}</h3>{% endif %}
+            {% if step_description != blank %}<div class="ai-peptide-guide-{{ ai_gen_id }}__description">{{ step_description }}</div>{% endif %}
+          </div>
+          {% if step_video != blank %}
+            <div class="ai-peptide-guide-{{ ai_gen_id }}__media">{{ step_video | video_tag: controls: true, preload: 'metadata' }}</div>
+          {% elsif step_image != blank %}
+            <div class="ai-peptide-guide-{{ ai_gen_id }}__media">
+              <img src="{{ step_image | image_url: width: 900 }}" alt="{{ step_image.alt | escape }}" loading="lazy" width="{{ step_image.width }}" height="{{ step_image.height }}">
+            </div>
+          {% else %}
+            <div class="ai-peptide-guide-{{ ai_gen_id }}__media ai-peptide-guide-{{ ai_gen_id }}__placeholder">
+              {{ 'image' | placeholder_svg_tag }}
+              <span class="ai-peptide-guide-{{ ai_gen_id }}__empty">Add an optional image or video</span>
+            </div>
+          {% endif %}
+        </article>
+      {% endif %}
+    {% endfor %}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Peptide guide",
+  "settings": [
+    { "type": "text", "id": "guide_title", "label": "Guide title", "default": "Collagen Peptide Micro-Infusion System" },
+    { "type": "range", "id": "desktop_width_percent", "label": "Desktop width", "min": 50, "max": 100, "step": 5, "unit": "%", "default": 100 },
+    { "type": "header", "content": "Lid-opening intro" },
+    { "type": "text", "id": "lid_heading", "label": "Heading", "default": "How to open the lid" },
+    { "type": "richtext", "id": "lid_description", "label": "Description", "default": "<p>Watch how to open the lid before you begin.</p>" },
+    { "type": "video", "id": "lid_video", "label": "Compact video" },
+    { "type": "header", "content": "Step 1" },
+    { "type": "text", "id": "step_1_heading", "label": "Heading", "default": "Before you get started" },
+    { "type": "richtext", "id": "step_1_description", "label": "Description", "default": "<p>Read the product instructions and prepare your skin and device before use.</p>" },
+    { "type": "image_picker", "id": "step_1_image", "label": "Image" },
+    { "type": "video", "id": "step_1_video", "label": "Video" },
+    { "type": "header", "content": "Step 2" },
+    { "type": "text", "id": "step_2_heading", "label": "Heading", "default": "Prepare the device" },
+    { "type": "richtext", "id": "step_2_description", "label": "Description", "default": "<p>Add your preparation instructions for this step.</p>" },
+    { "type": "image_picker", "id": "step_2_image", "label": "Image" },
+    { "type": "video", "id": "step_2_video", "label": "Video" },
+    { "type": "header", "content": "Step 3" },
+    { "type": "text", "id": "step_3_heading", "label": "Heading", "default": "Apply the treatment" },
+    { "type": "richtext", "id": "step_3_description", "label": "Description", "default": "<p>Add clear instructions for applying the treatment.</p>" },
+    { "type": "image_picker", "id": "step_3_image", "label": "Image" },
+    { "type": "video", "id": "step_3_video", "label": "Video" },
+    { "type": "header", "content": "Step 4" },
+    { "type": "text", "id": "step_4_heading", "label": "Heading", "default": "Complete your routine" },
+    { "type": "richtext", "id": "step_4_description", "label": "Description", "default": "<p>Add the final care and after-use instructions here.</p>" },
+    { "type": "image_picker", "id": "step_4_image", "label": "Image" },
+    { "type": "video", "id": "step_4_video", "label": "Video" },
+    { "type": "header", "content": "Step 5" },
+    { "type": "text", "id": "step_5_heading", "label": "Heading", "default": "Clean and store" },
+    { "type": "richtext", "id": "step_5_description", "label": "Description", "default": "<p>Add cleaning and storage guidance for the device.</p>" },
+    { "type": "image_picker", "id": "step_5_image", "label": "Image" },
+    { "type": "video", "id": "step_5_video", "label": "Video" }
+  ],
+  "presets": [{ "name": "Peptide guide" }],
+  "tag": null,
+  "class": "peptide-guide-block"
+}
+{% endschema %}

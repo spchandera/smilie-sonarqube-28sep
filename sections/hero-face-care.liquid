@@ -1,0 +1,605 @@
+
+
+{% liquid
+  assign has_desktop_image = false
+  assign has_mobile_image = false
+
+  if section.settings.image_desktop != blank
+    assign has_desktop_image = true
+  endif
+
+  if section.settings.image_mobile != blank
+    assign has_mobile_image = true
+  endif
+
+  assign widths = '832, 1200, 1600, 1920, 2560, 3840'
+  assign mobile_widths = '416, 600, 800, 1200, 1600'
+  assign mobile_widths_array = mobile_widths | split: ', '
+
+  assign fetch_priority = 'auto'
+  if section.index == 1
+    assign fetch_priority = 'high'
+  endif
+
+  assign sizes_desktop = '50vw'
+  assign sizes_mobile = '100vw'
+%}
+
+<div
+  id="HeroFaceCare-{{ section.id }}"
+  class="hero-face-care color-{{ section.settings.color_scheme }}"
+  style="
+    {% if section.settings.section_height == 'custom' %}
+      --hero-face-care-min-height: {{ section.settings.section_height_custom }}svh;
+    {% elsif section.settings.section_height == 'full-screen' %}
+      --hero-face-care-min-height: 100svh;
+    {% else %}
+      --hero-face-care-min-height: var(--section-height-{{ section.settings.section_height }});
+    {% endif %}
+  "
+  {% if request.visual_preview_mode %}
+    data-shopify-visual-preview
+  {% endif %}
+>
+  <div
+    class="hero-face-care__container spacing-style section section--full-width"
+    style="{% render 'spacing-style', settings: section.settings %}"
+  >
+    {% comment %} Mobile background image {% endcomment %}
+    <div class="hero-face-care__mobile-bg">
+      {% if has_mobile_image %}
+        {{
+          section.settings.image_mobile
+          | image_url: width: 1600
+          | image_tag:
+            width: section.settings.image_mobile.width,
+            widths: mobile_widths,
+            height: section.settings.image_mobile.height,
+            alt: section.settings.image_mobile.alt,
+            class: 'hero-face-care__image',
+            sizes: sizes_mobile,
+            fetchpriority: fetch_priority
+        }}
+      {% elsif has_desktop_image %}
+        {{
+          section.settings.image_desktop
+          | image_url: width: 1600
+          | image_tag:
+            width: section.settings.image_desktop.width,
+            widths: mobile_widths,
+            height: section.settings.image_desktop.height,
+            alt: section.settings.image_desktop.alt,
+            class: 'hero-face-care__image',
+            sizes: sizes_mobile,
+            fetchpriority: fetch_priority
+        }}
+      {% else %}
+        {{ 'hero-apparel-1' | placeholder_svg_tag: 'hero-face-care__image' }}
+      {% endif %}
+
+      {% liquid
+        if section.settings.toggle_overlay
+          render 'overlay', settings: section.settings
+        endif
+      %}
+    </div>
+
+    <div class="hero-face-care__grid">
+      {% comment %} Left column: Content {% endcomment %}
+      <div
+        class="
+          hero-face-care__content
+          layout-panel-flex
+          layout-panel-flex--{{ section.settings.content_direction }}
+          {% if section.settings.vertical_on_mobile %}mobile-column{% endif %}
+          section-content-wrapper
+          {{ section.settings.section_width }}
+        "
+        style="{% render 'layout-panel-style', settings: section.settings %}"
+      >
+        {% content_for 'blocks' %}
+      </div>
+
+      {% comment %} Right column: Desktop image {% endcomment %}
+      <div class="hero-face-care__media">
+        {% if has_desktop_image %}
+          {{
+            section.settings.image_desktop
+            | image_url: width: 3840
+            | image_tag:
+              width: section.settings.image_desktop.width,
+              widths: widths,
+              height: section.settings.image_desktop.height,
+              alt: section.settings.image_desktop.alt,
+              class: 'hero-face-care__image',
+              sizes: sizes_desktop,
+              fetchpriority: fetch_priority
+          }}
+        {% else %}
+          {{ 'hero-apparel-1' | placeholder_svg_tag: 'hero-face-care__image' }}
+        {% endif %}
+
+        {% liquid
+          if section.settings.toggle_overlay
+            render 'overlay', settings: section.settings
+          endif
+        %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .hero-face-care {
+    position: relative;
+    min-height: calc(var(--hero-face-care-min-height) - var(--hero-height-offset, 0px));
+  }
+
+  .hero-face-care[data-shopify-visual-preview] {
+    --hero-face-care-min-height: 600px;
+    min-height: 600px;
+  }
+
+  .hero-face-care__container {
+    position: relative;
+    overflow: hidden;
+    min-height: inherit;
+    z-index: var(--layer-base);
+  }
+
+  .hero-face-care__grid {
+    position: relative;
+    min-height: inherit;
+    z-index: var(--layer-flat);
+  }
+
+  /* Mobile layout: background image with overlay content */
+  .hero-face-care__mobile-bg {
+    position: absolute;
+    inset: 0;
+    z-index: var(--layer-base);
+    display: block;
+  }
+
+  .hero-face-care__media {
+    display: none;
+  }
+
+  .hero-face-care__content {
+    position: relative;
+    z-index: var(--layer-flat);
+    min-height: inherit;
+  }
+
+  .hero-face-care__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+  }
+
+  /* Desktop layout: two columns */
+  @media screen and (min-width: 750px) {
+    .hero-face-care__mobile-bg {
+      display: none;
+    }
+
+    .hero-face-care__grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: inherit;
+    }
+
+    .hero-face-care__content {
+      position: relative;
+      z-index: var(--layer-flat);
+      padding-inline: var(--page-margin);
+      align-items: var(--vertical-alignment);
+      justify-content: var(--horizontal-alignment);
+    }
+
+    .hero-face-care__content.page-width {
+      max-width: calc(var(--page-content-width) / 2);
+      margin-inline: auto;
+    }
+
+    .hero-face-care__media {
+      position: relative;
+      display: block;
+      overflow: hidden;
+      z-index: var(--layer-base);
+    }
+  }
+
+  .hero-face-care__content .group-block-content {
+    position: relative;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Hero - Face Care",
+  "tag": "section",
+  "class": "hero-face-care-wrapper section-wrapper",
+  "blocks": [
+    {
+      "type": "@theme"
+    },
+    {
+      "type": "text"
+    },
+    {
+      "type": "button"
+    },
+    {
+      "type": "logo"
+    },
+    {
+      "type": "jumbo-text"
+    },
+    {
+      "type": "spacer"
+    },
+    {
+      "type": "group"
+    },
+    {
+      "type": "_marquee"
+    }
+  ],
+  "disabled_on": {
+    "groups": ["header"]
+  },
+  "settings": [
+    {
+      "type": "header",
+      "content": "Images"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_desktop",
+      "label": "Desktop image"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_mobile",
+      "label": "Mobile image",
+      "info": "Falls back to desktop image if not set"
+    },
+    {
+      "type": "header",
+      "content": "t:content.layout"
+    },
+    {
+      "type": "select",
+      "id": "content_direction",
+      "label": "t:settings.direction",
+      "options": [
+        {
+          "value": "column",
+          "label": "t:options.vertical"
+        },
+        {
+          "value": "row",
+          "label": "t:options.horizontal"
+        }
+      ],
+      "default": "column"
+    },
+    {
+      "type": "checkbox",
+      "id": "vertical_on_mobile",
+      "label": "t:settings.vertical_on_mobile",
+      "default": true,
+      "visible_if": "{{ section.settings.content_direction == 'row' }}"
+    },
+    {
+      "type": "select",
+      "id": "horizontal_alignment",
+      "label": "t:settings.alignment",
+      "options": [
+        {
+          "value": "flex-start",
+          "label": "t:options.left"
+        },
+        {
+          "value": "center",
+          "label": "t:options.center"
+        },
+        {
+          "value": "flex-end",
+          "label": "t:options.right"
+        },
+        {
+          "value": "space-between",
+          "label": "t:options.space_between"
+        }
+      ],
+      "default": "flex-start",
+      "visible_if": "{{ section.settings.content_direction == 'row' }}"
+    },
+    {
+      "type": "select",
+      "id": "vertical_alignment",
+      "label": "t:settings.position",
+      "options": [
+        {
+          "value": "flex-start",
+          "label": "t:options.top"
+        },
+        {
+          "value": "center",
+          "label": "t:options.center"
+        },
+        {
+          "value": "flex-end",
+          "label": "t:options.bottom"
+        }
+      ],
+      "default": "center",
+      "visible_if": "{{ section.settings.content_direction == 'row' }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "align_baseline",
+      "label": "t:settings.align_baseline",
+      "default": false,
+      "visible_if": "{{ section.settings.vertical_alignment == 'flex-end' }}"
+    },
+    {
+      "type": "select",
+      "id": "horizontal_alignment_flex_direction_column",
+      "label": "t:settings.alignment",
+      "options": [
+        {
+          "value": "flex-start",
+          "label": "t:options.left"
+        },
+        {
+          "value": "center",
+          "label": "t:options.center"
+        },
+        {
+          "value": "flex-end",
+          "label": "t:options.right"
+        }
+      ],
+      "default": "flex-start",
+      "visible_if": "{{ section.settings.content_direction != 'row' }}"
+    },
+    {
+      "type": "select",
+      "id": "vertical_alignment_flex_direction_column",
+      "label": "t:settings.position",
+      "options": [
+        {
+          "value": "flex-start",
+          "label": "t:options.top"
+        },
+        {
+          "value": "center",
+          "label": "t:options.center"
+        },
+        {
+          "value": "flex-end",
+          "label": "t:options.bottom"
+        },
+        {
+          "value": "space-between",
+          "label": "t:options.space_between"
+        }
+      ],
+      "default": "center",
+      "visible_if": "{{ section.settings.content_direction == 'column' }}"
+    },
+    {
+      "type": "range",
+      "id": "gap",
+      "label": "t:settings.gap",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "t:settings.width",
+      "options": [
+        {
+          "value": "page-width",
+          "label": "t:options.page"
+        },
+        {
+          "value": "full-width",
+          "label": "t:options.full"
+        }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "select",
+      "id": "section_height",
+      "label": "t:settings.height",
+      "options": [
+        {
+          "value": "auto",
+          "label": "t:options.auto"
+        },
+        {
+          "value": "small",
+          "label": "t:options.small"
+        },
+        {
+          "value": "medium",
+          "label": "t:options.medium"
+        },
+        {
+          "value": "large",
+          "label": "t:options.large"
+        },
+        {
+          "value": "full-screen",
+          "label": "t:options.full_screen"
+        },
+        {
+          "value": "custom",
+          "label": "t:options.custom"
+        }
+      ],
+      "default": "medium"
+    },
+    {
+      "type": "range",
+      "id": "section_height_custom",
+      "label": "t:settings.custom_height",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "default": 50,
+      "unit": "%",
+      "visible_if": "{{ section.settings.section_height == 'custom' }}"
+    },
+    {
+      "type": "header",
+      "content": "t:content.appearance"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:settings.color_scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "checkbox",
+      "id": "toggle_overlay",
+      "label": "t:settings.media_overlay"
+    },
+    {
+      "type": "color",
+      "id": "overlay_color",
+      "label": "t:settings.overlay_color",
+      "alpha": true,
+      "default": "#00000026",
+      "visible_if": "{{ section.settings.toggle_overlay }}"
+    },
+    {
+      "type": "select",
+      "id": "overlay_style",
+      "label": "t:settings.overlay_style",
+      "options": [
+        {
+          "value": "solid",
+          "label": "t:options.solid"
+        },
+        {
+          "value": "gradient",
+          "label": "t:options.gradient"
+        }
+      ],
+      "default": "solid",
+      "visible_if": "{{ section.settings.toggle_overlay }}"
+    },
+    {
+      "type": "select",
+      "id": "gradient_direction",
+      "label": "t:settings.gradient_direction",
+      "options": [
+        {
+          "value": "to top",
+          "label": "t:options.up"
+        },
+        {
+          "value": "to bottom",
+          "label": "t:options.down"
+        }
+      ],
+      "default": "to top",
+      "visible_if": "{{ section.settings.toggle_overlay and section.settings.overlay_style == 'gradient' }}"
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    }
+  ],
+  "presets": [
+    {
+      "name": "Hero - Face Care",
+      "category": "t:categories.banners",
+      "blocks": {
+        "text_1": {
+          "type": "text",
+          "settings": {
+            "text": "<p>CLINICALLY BACKED. DEEPLY PERSONAL.</p>",
+            "type_preset": "h6",
+            "max_width": "narrow"
+          }
+        },
+        "text_2": {
+          "type": "text",
+          "settings": {
+            "text": "<h2>Science-backed tools for self-led care.</h2>",
+            "type_preset": "h1",
+            "max_width": "narrow"
+          }
+        },
+        "text_3": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Clinically-backed beauty tech designed around you. Smilie exists for the in-between moments. For the ritual-makers. For people who want real results without the clinic.</p>",
+            "max_width": "narrow",
+            "padding-block-end": 24
+          }
+        },
+        "button_1": {
+          "type": "button",
+          "settings": {
+            "label": "shop the range",
+            "link": ""
+          }
+        },
+        "button_2": {
+          "type": "button",
+          "settings": {
+            "label": "our story",
+            "link": "",
+            "style_class": "button-secondary"
+          }
+        }
+      },
+      "block_order": ["text_1", "text_2", "text_3", "button_1", "button_2"],
+      "settings": {
+        "horizontal_alignment_flex_direction_column": "flex-start",
+        "vertical_alignment_flex_direction_column": "center",
+        "gap": 16,
+        "section_height": "large",
+        "color_scheme": "scheme-5",
+        "padding-block-start": 40,
+        "padding-block-end": 40,
+        "toggle_overlay": false
+      }
+    }
+  ]
+}
+{% endschema %}
