@@ -215,9 +215,7 @@ class LocalizationFormComponent extends Component {
 
       if (!countryAliases) return matchTypes;
 
-      matchTypes.alias =
-        countryAliases.length > 0 &&
-        countryAliases.some((alias) =>
+      matchTypes.alias = countryAliases.some((alias) =>
           options.aliasExactMatch ? alias === searchValue : alias.startsWith(searchValue)
         );
     }

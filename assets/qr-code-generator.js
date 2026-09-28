@@ -819,6 +819,23 @@ function getAdjacentModulesPenalty(qrCode, moduleCount) {
 }
 
 /**
+ * Counts the dark modules in the 2x2 block whose top-left corner is at (row, col)
+ *
+ * @param {QRCodeModel} qrCode
+ * @param {number} row
+ * @param {number} col
+ * @returns {number}
+ */
+function countDarkInBlock(qrCode, row, col) {
+  let count = 0;
+  if (qrCode.isDark(row, col)) count++;
+  if (qrCode.isDark(row + 1, col)) count++;
+  if (qrCode.isDark(row, col + 1)) count++;
+  if (qrCode.isDark(row + 1, col + 1)) count++;
+  return count;
+}
+
+/**
  * Penalty for 2x2 blocks of the same colour
  *
  * @param {QRCodeModel} qrCode
@@ -829,11 +846,7 @@ function getSameColourBlocksPenalty(qrCode, moduleCount) {
   let lostPoint = 0;
   for (let row = 0; row < moduleCount - 1; row++) {
     for (let col = 0; col < moduleCount - 1; col++) {
-      let count = 0;
-      if (qrCode.isDark(row, col)) count++;
-      if (qrCode.isDark(row + 1, col)) count++;
-      if (qrCode.isDark(row, col + 1)) count++;
-      if (qrCode.isDark(row + 1, col + 1)) count++;
+      const count = countDarkInBlock(qrCode, row, col);
       if (count == 0 || count == 4) {
         lostPoint += 3;
       }
@@ -1408,17 +1421,58 @@ var svgDrawer = (function () {
 var useSVG = document.documentElement.tagName.toLowerCase() === 'svg';
 
 /**
+ * Drawing QRCode by using a Table tag
+ *
+ * @constructor
+ * @param {Element} el
+ * @param {QRCodeOptions} htOption
+ */
+function TableDrawing(el, htOption) {
+  this._el = el;
+  this._htOption = htOption;
+}
+
+// Drawing in Canvas
+function onMakeImage() {
+  this._elImage.src = this._elCanvas.toDataURL('image/png');
+  this._elImage.style.display = 'block';
+  this._elCanvas.style.display = 'none';
+}
+
+/**
+ * Drawing QRCode by using canvas
+ *
+ * @constructor
+ * @param {HTMLElement} el
+ * @param {QRCodeOptions} htOption
+ */
+function CanvasDrawing(el, htOption) {
+  this._bIsPainted = false;
+
+  this._htOption = htOption;
+  this._elCanvas = document.createElement('canvas');
+  this._elCanvas.width = htOption.width;
+  this._elCanvas.height = htOption.height;
+  el.appendChild(this._elCanvas);
+  this._el = el;
+  this._oContext = this._elCanvas.getContext('2d');
+  if (!this._oContext) {
+    throw new Error('Canvas is not supported');
+  }
+  this._bIsPainted = false;
+  this._elImage = document.createElement('img');
+  this._elImage.alt = htOption.alt;
+  this._elImage.style.display = 'none';
+  this._el.appendChild(this._elImage);
+  /** @type {boolean|null} */
+  this._bSupportDataURI = null;
+}
+
+/**
  * Creates the Drawing implementation that renders the QRCode in the DOM by using a Table tag
  */
 function createTableDrawing() {
-  /**
-   * @param {Element} el
-   * @param {QRCodeOptions} htOption
-   */
-  var Drawing = function (el, htOption) {
-    this._el = el;
-    this._htOption = htOption;
-  };
+  var Drawing = TableDrawing;
 
   /**
    * @param {QRCodeModel} oQRCode
@@ -1479,41 +1533,7 @@ function createTableDrawing() {
  * Creates the Drawing implementation that renders the QRCode by using a Canvas
  */
 function createCanvasDrawing() {
-  // Drawing in Canvas
-  function onMakeImage() {
-    this._elImage.src = this._elCanvas.toDataURL('image/png');
-    this._elImage.style.display = 'block';
-    this._elCanvas.style.display = 'none';
-  }
-
-  /**
-   * Drawing QRCode by using canvas
-   *
-   * @constructor
-   * @param {HTMLElement} el
-   * @param {QRCodeOptions} htOption
-   */
-  var Drawing = function (el, htOption) {
-    this._bIsPainted = false;
-
-    this._htOption = htOption;
-    this._elCanvas = document.createElement('canvas');
-    this._elCanvas.width = htOption.width;
-    this._elCanvas.height = htOption.height;
-    el.appendChild(this._elCanvas);
-    this._el = el;
-    this._oContext = this._elCanvas.getContext('2d');
-    if (!this._oContext) {
-      throw new Error('Canvas is not supported');
-    }
-    this._bIsPainted = false;
-    this._elImage = document.createElement('img');
-    this._elImage.alt = htOption.alt;
-    this._elImage.style.display = 'none';
-    this._el.appendChild(this._elImage);
-    /** @type {boolean|null} */
-    this._bSupportDataURI = null;
-  };
+  var Drawing = CanvasDrawing;
 
   /**
    * Draw the QRCode
