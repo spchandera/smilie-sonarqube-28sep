@@ -83,11 +83,12 @@ export default class VariantPicker extends Component {
     const loadsNewProduct = isOnProductPage && !!newUrl && newUrl !== currentUrl;
     const isOnFeaturedProductSection = Boolean(this.closest('featured-product-information'));
 
-    const morphElementSelector = loadsNewProduct
-      ? 'main'
-      : isOnFeaturedProductSection
-      ? 'featured-product-information'
-      : undefined;
+    let morphElementSelector;
+    if (loadsNewProduct) {
+      morphElementSelector = 'main';
+    } else if (isOnFeaturedProductSection) {
+      morphElementSelector = 'featured-product-information';
+    }
 
     this.fetchUpdatedSection(this.buildRequestUrl(selectedOption), morphElementSelector);
 
@@ -193,62 +194,78 @@ export default class VariantPicker extends Component {
     }
 
     if (target instanceof HTMLInputElement) {
-      const fieldsetIndex = Number.parseInt(target.dataset.fieldsetIndex || '');
-      const inputIndex = Number.parseInt(target.dataset.inputIndex || '');
-
-      if (!Number.isNaN(fieldsetIndex) && !Number.isNaN(inputIndex)) {
-        const fieldsets = /** @type {HTMLFieldSetElement[]} */ (this.refs.fieldsets || []);
-        const fieldset = fieldsets[fieldsetIndex];
-        const checkedIndices = this.#checkedIndices[fieldsetIndex];
-        const radios = this.#radios[fieldsetIndex];
-
-        if (radios && checkedIndices && fieldset) {
-          // Clear previous checked states
-          const [currentIndex, previousIndex] = checkedIndices;
-
-          if (currentIndex !== undefined && radios[currentIndex]) {
-            radios[currentIndex].dataset.previousChecked = 'false';
-          }
-          if (previousIndex !== undefined && radios[previousIndex]) {
-            radios[previousIndex].dataset.previousChecked = 'false';
-          }
-
-          // Update checked indices array - keep only the last 2 selections
-          checkedIndices.unshift(inputIndex);
-          checkedIndices.length = Math.min(checkedIndices.length, 2);
-
-          // Update the new states
-          const newCurrentIndex = checkedIndices[0]; // This is always inputIndex
-          const newPreviousIndex = checkedIndices[1]; // This might be undefined
-
-          // newCurrentIndex is guaranteed to exist since we just added it
-          if (newCurrentIndex !== undefined && radios[newCurrentIndex]) {
-            radios[newCurrentIndex].dataset.currentChecked = 'true';
-          }
-
-          if (newPreviousIndex !== undefined && radios[newPreviousIndex]) {
-            radios[newPreviousIndex].dataset.previousChecked = 'true';
-            radios[newPreviousIndex].dataset.currentChecked = 'false';
-          }
-
-          this.updateFieldsetCss(fieldsetIndex);
-        }
-      }
+      this.#updateRadioCheckedStates(target);
       target.checked = true;
     }
 
     if (target instanceof HTMLSelectElement) {
-      const newValue = target.value;
-      const newSelectedOption = Array.from(target.options).find((option) => option.value === newValue);
-
-      if (!newSelectedOption) throw new Error('Option not found');
-
-      for (const option of target.options) {
-        option.removeAttribute('selected');
-      }
-
-      newSelectedOption.setAttribute('selected', 'selected');
+      this.#updateSelectedSelectOption(target);
     }
+  }
+
+  /**
+   * Updates the current/previous checked data attributes of the radios in the target's fieldset.
+   * @param {HTMLInputElement} target - The selected radio input.
+   */
+  #updateRadioCheckedStates(target) {
+    const fieldsetIndex = Number.parseInt(target.dataset.fieldsetIndex || '');
+    const inputIndex = Number.parseInt(target.dataset.inputIndex || '');
+
+    if (Number.isNaN(fieldsetIndex) || Number.isNaN(inputIndex)) return;
+
+    const fieldsets = /** @type {HTMLFieldSetElement[]} */ (this.refs.fieldsets || []);
+    const fieldset = fieldsets[fieldsetIndex];
+    const checkedIndices = this.#checkedIndices[fieldsetIndex];
+    const radios = this.#radios[fieldsetIndex];
+
+    if (!radios || !checkedIndices || !fieldset) return;
+
+    // Clear previous checked states
+    const [currentIndex, previousIndex] = checkedIndices;
+
+    if (currentIndex !== undefined && radios[currentIndex]) {
+      radios[currentIndex].dataset.previousChecked = 'false';
+    }
+    if (previousIndex !== undefined && radios[previousIndex]) {
+      radios[previousIndex].dataset.previousChecked = 'false';
+    }
+
+    // Update checked indices array - keep only the last 2 selections
+    checkedIndices.unshift(inputIndex);
+    checkedIndices.length = Math.min(checkedIndices.length, 2);
+
+    // Update the new states
+    const newCurrentIndex = checkedIndices[0]; // This is always inputIndex
+    const newPreviousIndex = checkedIndices[1]; // This might be undefined
+
+    // newCurrentIndex is guaranteed to exist since we just added it
+    if (newCurrentIndex !== undefined && radios[newCurrentIndex]) {
+      radios[newCurrentIndex].dataset.currentChecked = 'true';
+    }
+
+    if (newPreviousIndex !== undefined && radios[newPreviousIndex]) {
+      radios[newPreviousIndex].dataset.previousChecked = 'true';
+      radios[newPreviousIndex].dataset.currentChecked = 'false';
+    }
+
+    this.updateFieldsetCss(fieldsetIndex);
+  }
+
+  /**
+   * Marks the currently chosen option of a select element with the selected attribute.
+   * @param {HTMLSelectElement} target - The select element.
+   */
+  #updateSelectedSelectOption(target) {
+    const newValue = target.value;
+    const newSelectedOption = Array.from(target.options).find((option) => option.value === newValue);
+
+    if (!newSelectedOption) throw new Error('Option not found');
+
+    for (const option of target.options) {
+      option.removeAttribute('selected');
+    }
+
+    newSelectedOption.setAttribute('selected', 'selected');
   }
 
   /**

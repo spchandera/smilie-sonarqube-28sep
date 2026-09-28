@@ -21,11 +21,11 @@ import { morph } from '@theme/morph';
  */
 export class ProductCardLink extends Component {
   get productTransitionEnabled() {
-    return this.getAttribute('data-product-transition') === 'true';
+    return this.dataset.productTransition === 'true';
   }
 
   get featuredMediaUrl() {
-    return this.getAttribute('data-featured-media-url');
+    return this.dataset.featuredMediaUrl ?? null;
   }
 
   /**
@@ -45,7 +45,7 @@ export class ProductCardLink extends Component {
     if (!this.productTransitionEnabled) return;
 
     const { cardGallery } = this.refs;
-    if (!cardGallery || !cardGallery.hasAttribute('data-view-transition-to-main-product')) return;
+    if (cardGallery?.dataset.viewTransitionToMainProduct === undefined) return;
 
     // Check on the current active image, whether it's a product card image or a resource card image
     const { imagesToTransition } = this.refs;
@@ -57,8 +57,8 @@ export class ProductCardLink extends Component {
 
     if (activeImage instanceof HTMLImageElement) this.#setImageSrcset(activeImage);
 
-    cardGallery.setAttribute('data-view-transition-type', 'product-image-transition');
-    cardGallery.setAttribute('data-view-transition-triggered', 'true');
+    cardGallery.dataset.viewTransitionType = 'product-image-transition';
+    cardGallery.dataset.viewTransitionTriggered = 'true';
   }
 
   /**
@@ -146,7 +146,6 @@ export class ProductCard extends ProductCardLink {
     if (shouldOpenInNewTab) {
       event.preventDefault();
       window.open(url.href, '_blank');
-      return;
     } else {
       window.location.href = url.href;
     }
@@ -230,7 +229,7 @@ export class ProductCard extends ProductCardLink {
     this.#previousSlideIndex = null;
 
     // Remove attribute after re-rendering since a variant selection has been made
-    this.removeAttribute('data-no-swatch-selected');
+    delete this.dataset.noSwatchSelected;
 
     // Force overflow list to reflow after variant update
     // This fixes an issue where the overflow counter doesn't update properly in some browsers
@@ -244,7 +243,7 @@ export class ProductCard extends ProductCardLink {
   #updateOverflowList() {
     // Find the overflow list in the variant picker
     const overflowList = this.querySelector('swatches-variant-picker-component overflow-list');
-    const isActiveOverflowList = overflowList?.querySelector('[slot="overflow"]') ? true : false;
+    const isActiveOverflowList = Boolean(overflowList?.querySelector('[slot="overflow"]'));
     if (!overflowList || !isActiveOverflowList) return;
 
     // Use requestAnimationFrame to ensure DOM has been updated
@@ -277,13 +276,15 @@ export class ProductCard extends ProductCardLink {
    * @param {VariantUpdateEvent} event - The variant update event.
    */
   #updateProductUrl(event) {
-    const responseProductCard = event.detail.data.html?.querySelector('product-card');
+    const responseProductCard = /** @type {HTMLElement | null | undefined} */ (
+      event.detail.data.html?.querySelector('product-card')
+    );
     const anchorElement = responseProductCard?.querySelector('a');
-    const featuredMediaUrl = responseProductCard?.getAttribute('data-featured-media-url');
+    const featuredMediaUrl = responseProductCard?.dataset.featuredMediaUrl;
 
     // Update the featured media URL for view transitions (inherited from ProductCardLink)
     if (featuredMediaUrl) {
-      this.setAttribute('data-featured-media-url', featuredMediaUrl);
+      this.dataset.featuredMediaUrl = featuredMediaUrl;
     }
 
     if (anchorElement instanceof HTMLAnchorElement) {
@@ -478,7 +479,7 @@ export class ProductCard extends ProductCardLink {
     if (!(event.target instanceof Element)) return;
 
     // Don't navigate if this product card is marked as no-navigation (e.g., in theme editor)
-    if (this.hasAttribute('data-no-navigation')) return;
+    if ('noNavigation' in this.dataset) return;
 
     const interactiveElement = event.target.closest('button, input, label, select, [tabindex="1"]');
 
@@ -499,7 +500,7 @@ export class ProductCard extends ProductCardLink {
       const url = new URL(window.location.href);
       const parent = this.closest('li');
       url.hash = productCardAnchor;
-      if (parent && parent.dataset.page) {
+      if (parent?.dataset.page) {
         url.searchParams.set('page', parent.dataset.page);
       }
 
@@ -566,7 +567,7 @@ class SwatchesVariantPickerComponent extends VariantPicker {
     // Check if this is a swatch input
     const isSwatchInput = event.target instanceof HTMLInputElement && event.target.name?.includes('-swatch');
     const clickedSwatch = event.target;
-    const availableCount = parseInt(clickedSwatch.dataset.availableCount || '0');
+    const availableCount = Number.parseInt(clickedSwatch.dataset.availableCount || '0');
     const firstAvailableVariantId = clickedSwatch.dataset.firstAvailableOrFirstVariantId;
 
     // For swatch inputs, check if we need special handling

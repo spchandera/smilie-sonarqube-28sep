@@ -289,8 +289,6 @@ class HeaderMenu extends Component {
     this.style.setProperty('--submenu-opacity', '0');
     this.dataset.overflowExpanded = 'false';
 
-    const submenu = findSubmenu(item);
-
     document.body.removeEventListener('pointermove', this.#onPointerMove);
     this.#stopPointerTracking(item);
 
@@ -337,7 +335,7 @@ class HeaderMenu extends Component {
   #setFullOpenHeaderHeight(submenuHeight) {
     if (!this.headerComponent) return;
 
-    const isOverlapSituation = this.headerComponent.hasAttribute('data-submenu-overlap-bottom-row');
+    const isOverlapSituation = 'submenuOverlapBottomRow' in this.headerComponent.dataset;
 
     const headerVisibleHeight =
       isOverlapSituation && this.headerComponent.offsetHeight > 0

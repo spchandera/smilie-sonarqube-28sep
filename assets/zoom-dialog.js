@@ -11,6 +11,13 @@ import {
 import { scrollIntoView } from '@theme/scrolling';
 import { ZoomMediaSelectedEvent } from '@theme/events';
 import { DialogCloseEvent } from '@theme/dialog';
+
+/**
+ * Default options for {@link ZoomDialog#selectThumbnail}.
+ * @type {{ behavior: ScrollBehavior }}
+ */
+const DEFAULT_SELECT_THUMBNAIL_OPTIONS = Object.freeze({ behavior: /** @type {ScrollBehavior} */ ('smooth') });
+
 /**
  * A custom element that renders a zoom dialog.
  *
@@ -223,11 +230,11 @@ export class ZoomDialog extends Component {
    * @param {Object} options - The options for the selection.
    * @param {ScrollBehavior} options.behavior - The behavior of the scroll.
    */
-  async selectThumbnail(index, options = { behavior: 'smooth' }) {
-    if (!this.refs.thumbnails || !this.refs.thumbnails.children.length) return;
+  async selectThumbnail(index, options = DEFAULT_SELECT_THUMBNAIL_OPTIONS) {
+    if (!this.refs.thumbnails?.children.length) return;
 
     // Guard if invalid
-    if (isNaN(index) || index < 0 || index >= this.refs.thumbnails.children.length) return;
+    if (Number.isNaN(Number(index)) || index < 0 || index >= this.refs.thumbnails.children.length) return;
 
     const { media, thumbnails } = this.refs;
     const targetThumbnail = thumbnails.children[index];
@@ -271,8 +278,9 @@ function getMostVisibleElement(elements) {
   return new Promise((resolve) => {
     const observer = new IntersectionObserver(
       (entries) => {
-        const mostVisible = entries.reduce((prev, current) =>
-          current.intersectionRatio > prev.intersectionRatio ? current : prev
+        const mostVisible = entries.reduce(
+          (prev, current) => (current.intersectionRatio > prev.intersectionRatio ? current : prev),
+          entries[0]
         );
         observer.disconnect();
         resolve(/** @type {HTMLElement} */ (mostVisible.target));

@@ -248,7 +248,7 @@ export class QuickAddComponent extends Component {
     if (event.target.closest('product-card') !== this.closest('product-card')) return;
     const productOptionsCount = this.dataset.productOptionsCount;
     const quickAddButton = productOptionsCount === '1' ? 'add' : 'choose';
-    this.setAttribute('data-quick-add-button', quickAddButton);
+    this.dataset.quickAddButton = quickAddButton;
   }
 
   /**

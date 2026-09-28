@@ -34,6 +34,7 @@ class CartNote extends Component {
         signal: abortController.signal,
       });
     } catch (error) {
+      // Intentionally ignored: aborted or failed note updates are non-critical and the next input will retry.
     } finally {
       this.#activeFetch = null;
       cartPerformance.measureFromEvent('note-update:user-action', event);

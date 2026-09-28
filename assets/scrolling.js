@@ -192,7 +192,7 @@ export class Scroller {
    * Sets up the scroll end promise if not already set.
    */
   #setup() {
-    if (this.#promise) {
+    if (this.#promise !== undefined) {
       return;
     }
 
@@ -296,7 +296,7 @@ function calculatePaddingStart(element, axis) {
   const computedStyle = getComputedStyle(element);
   const value = axis === 'x' ? computedStyle.paddingInlineStart : computedStyle.paddingBlockStart;
 
-  return parseFloat(value);
+  return Number.parseFloat(value);
 }
 
 /**
@@ -403,13 +403,21 @@ class ScrollHint extends HTMLElement {
         ? scrollTop / (scrollHeight - clientHeight)
         : scrollLeft / (scrollWidth - clientWidth);
 
-    this.style.maskImage = Number.isNaN(scrollPercentage)
-      ? ''
-      : `linear-gradient(
-        to ${scrollDirection === 'vertical' ? 'bottom' : 'right'},
-        transparent ${scrollPercentage > 0 ? 1 : 0}%,
-        black ${scrollPercentage < 0.1 ? scrollPercentage * 100 : 10}%,
-        black ${scrollPercentage > 0.9 ? scrollPercentage * 100 : 90}%,
+    if (Number.isNaN(scrollPercentage)) {
+      this.style.maskImage = '';
+      return;
+    }
+
+    const gradientDirection = scrollDirection === 'vertical' ? 'bottom' : 'right';
+    const fadeStart = scrollPercentage > 0 ? 1 : 0;
+    const solidStart = scrollPercentage < 0.1 ? scrollPercentage * 100 : 10;
+    const solidEnd = scrollPercentage > 0.9 ? scrollPercentage * 100 : 90;
+
+    this.style.maskImage = `linear-gradient(
+        to ${gradientDirection},
+        transparent ${fadeStart}%,
+        black ${solidStart}%,
+        black ${solidEnd}%,
         transparent 100%
       )`;
   };

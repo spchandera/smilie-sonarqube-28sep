@@ -83,6 +83,7 @@
 .menu-drawer__menu .menu-drawer__menu-item--mainlist {
   font-size: var(--menu-child-font-size);
   min-height: unset;
+  padding-right: calc(var(--padding-lg) * 2.8);
 }
 .header.is-scrolled[transparent] {
   --color-foreground: rgb(0 0 0);
@@ -100,9 +101,6 @@
 .menu-drawer__footer .menu-drawer__footer-logo {
   display: none;
 }
-.header-drawer .header__columns header-actions {
-  gap: 14px;
-}
 .header-drawer .search__button.field__button {
   top: 50% !important;
   transform: translateY(-50%);
@@ -115,9 +113,6 @@
 .header-drawer .menu-drawer__menu-item {
   font-size: calc(var(--menu-child-font-size) - 2px);
   text-transform: lowercase;
-}
-.menu-drawer__menu .menu-drawer__back-button {
-  margin-block: 0 !important;
 }
 body .header .header__drawer {
   justify-content: flex-start;
@@ -194,10 +189,8 @@ body .header .header__drawer {
   padding: 5px !important;
   z-index: 1;
 }
-.menu-drawer__menu .menu-drawer__menu-item--mainlist {
-  padding-right: calc(var(--padding-lg) * 2.8);
-}
 .menu-drawer__menu .menu-drawer__back-button {
+  margin-block: 0 !important;
   padding-left: calc(var(--padding-lg) * 3.2) !important;
   position: relative;
   padding-block: 16.8px !important;

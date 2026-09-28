@@ -38,11 +38,11 @@
     document
       .querySelectorAll('[data-view-transition-type]:not([data-view-transition-triggered])')
       .forEach((element) => {
-        element.removeAttribute('data-view-transition-type');
+        delete /** @type {HTMLElement} */ (element).dataset.viewTransitionType;
       });
 
     const transitionTriggered = document.querySelector('[data-view-transition-triggered]');
-    const transitionType = transitionTriggered?.getAttribute('data-view-transition-type');
+    const transitionType = /** @type {HTMLElement | null} */ (transitionTriggered)?.dataset.viewTransitionType;
 
     if (transitionType) {
       viewTransition.types.clear();
@@ -77,7 +77,7 @@
       idleCallback(() => {
         sessionStorage.removeItem('custom-transition-type');
         document.querySelectorAll('[data-view-transition-type]').forEach((element) => {
-          element.removeAttribute('data-view-transition-type');
+          delete /** @type {HTMLElement} */ (element).dataset.viewTransitionType;
         });
       });
     } else {

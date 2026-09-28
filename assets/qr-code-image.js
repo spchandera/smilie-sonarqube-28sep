@@ -12,21 +12,31 @@ class QRCodeImage extends Component {
   #height = 72;
   /** @type {string} */
   #alt = '';
+  /** @type {QRCode | undefined} */
+  #qrCode;
 
   connectedCallback() {
     super.connectedCallback();
     const widthAttribute = this.getAttribute('width') ?? '';
-    this.#width = isNaN(parseInt(widthAttribute)) ? this.#width : parseInt(widthAttribute);
+    this.#width = Number.isNaN(Number.parseInt(widthAttribute)) ? this.#width : Number.parseInt(widthAttribute);
     const heightAttribute = this.getAttribute('height') ?? '';
-    this.#height = isNaN(parseInt(heightAttribute)) ? this.#height : parseInt(heightAttribute);
+    this.#height = Number.isNaN(Number.parseInt(heightAttribute)) ? this.#height : Number.parseInt(heightAttribute);
     this.#alt = this.getAttribute('alt') ?? this.#alt;
 
-    new QRCode(this, {
-      text: this.getAttribute('data-identifier') || '',
+    this.#qrCode = new QRCode(this, {
+      text: this.dataset.identifier || '',
       width: this.#width,
       height: this.#height,
       alt: this.#alt,
     });
+  }
+
+  /**
+   * The QRCode instance rendered into this element.
+   * @returns {QRCode | undefined}
+   */
+  get qrCode() {
+    return this.#qrCode;
   }
 }
 

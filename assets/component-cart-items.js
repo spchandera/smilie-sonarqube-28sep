@@ -179,7 +179,7 @@ class CartItemsComponent extends Component {
 
         // Grab the new cart item count from a hidden element
         const newCartHiddenItemCount = newSectionHTML.querySelector('[ref="cartItemCount"]')?.textContent;
-        const newCartItemCount = newCartHiddenItemCount ? parseInt(newCartHiddenItemCount, 10) : 0;
+        const newCartItemCount = newCartHiddenItemCount ? Number.parseInt(newCartHiddenItemCount, 10) : 0;
 
         // Update data-cart-quantity for all matching variants
         this.#updateQuantitySelectors(parsedResponseText);
@@ -290,7 +290,7 @@ class CartItemsComponent extends Component {
         const input = selector.querySelector('input[data-cart-quantity]');
         if (!input) continue;
 
-        input.setAttribute('data-cart-quantity', item.quantity.toString());
+        input.dataset.cartQuantity = item.quantity.toString();
 
         // Update the quantity selector's internal state
         if ('updateCartQuantity' in selector && typeof selector.updateCartQuantity === 'function') {

@@ -2,6 +2,21 @@ import { Component } from '@theme/component';
 import { isClickedOutside, normalizeString, onAnimationEnd } from '@theme/utilities';
 
 /**
+ * Default options used when matching a country against a search value.
+ */
+const DEFAULT_MATCH_OPTIONS = Object.freeze({
+  // Which data types (label, alias, iso) to match against
+  matchLabel: true,
+  matchAlias: true,
+  matchIso: true,
+  matchCurrency: true,
+  // If true, the search value must match the start of the label
+  labelMatchStart: false,
+  // If true, a result will not display unless the search value equals an alias in its entirety
+  aliasExactMatch: false,
+});
+
+/**
  * A custom element that displays a localization form.
  *
  * @typedef {object} FormRefs
@@ -22,9 +37,9 @@ class LocalizationFormComponent extends Component {
   connectedCallback() {
     super.connectedCallback();
 
-    this.refs.search && this.refs.search.addEventListener('keydown', this.#onSearchKeyDown);
-    this.refs.countryList && this.refs.countryList.addEventListener('keydown', this.#onContainerKeyDown);
-    this.refs.countryList && this.refs.countryList.addEventListener('scroll', this.#onCountryListScroll);
+    this.refs.search?.addEventListener('keydown', this.#onSearchKeyDown);
+    this.refs.countryList?.addEventListener('keydown', this.#onContainerKeyDown);
+    this.refs.countryList?.addEventListener('scroll', this.#onCountryListScroll);
 
     // Resizing the language input can be expensive for browsers that don't support field-sizing: content.
     // Spliting it into separate tasks at least helps when there are multiple localization forms on the page.
@@ -33,9 +48,9 @@ class LocalizationFormComponent extends Component {
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    this.refs.search && this.refs.search.removeEventListener('keydown', this.#onSearchKeyDown);
-    this.refs.countryList && this.refs.countryList.removeEventListener('keydown', this.#onContainerKeyDown);
-    this.refs.countryList && this.refs.countryList.removeEventListener('scroll', this.#onCountryListScroll);
+    this.refs.search?.removeEventListener('keydown', this.#onSearchKeyDown);
+    this.refs.countryList?.removeEventListener('keydown', this.#onContainerKeyDown);
+    this.refs.countryList?.removeEventListener('scroll', this.#onCountryListScroll);
   }
 
   /**
@@ -74,7 +89,7 @@ class LocalizationFormComponent extends Component {
 
     setTimeout(() => {
       const focusableItems = this.refs.countryListItems.filter((item) => !item.hasAttribute('hidden'));
-      const focusedItemIndex = focusableItems.findIndex((item) => item === document.activeElement);
+      const focusedItemIndex = focusableItems.indexOf(/** @type {HTMLElement} */ (document.activeElement));
       const focusedItem = focusableItems[focusedItemIndex];
 
       if (focusedItem) {
@@ -171,17 +186,7 @@ class LocalizationFormComponent extends Component {
   #findMatches(
     searchValue,
     countryEl,
-    options = {
-      // Which data types (label, alias, iso) to match against
-      matchLabel: true,
-      matchAlias: true,
-      matchIso: true,
-      matchCurrency: true,
-      // If true, the search value must match the start of the label
-      labelMatchStart: false,
-      // If true, a result will not display unless the search value equals an alias in its entirety
-      aliasExactMatch: false,
-    }
+    options = DEFAULT_MATCH_OPTIONS
   ) {
     let matchTypes = {};
     const { aliases, value: iso } = countryEl.dataset;
@@ -212,9 +217,9 @@ class LocalizationFormComponent extends Component {
 
       matchTypes.alias =
         countryAliases.length > 0 &&
-        countryAliases.find((alias) =>
+        countryAliases.some((alias) =>
           options.aliasExactMatch ? alias === searchValue : alias.startsWith(searchValue)
-        ) !== undefined;
+        );
     }
 
     return matchTypes;
@@ -274,29 +279,7 @@ class LocalizationFormComponent extends Component {
     }
 
     for (const countryEl of countryListItems) {
-      if (searchValue === '') {
-        countryEl.removeAttribute('hidden');
-        const countrySpan = countryEl.querySelector('.country');
-        if (countrySpan) {
-          // eslint-disable-next-line no-self-assign
-          countrySpan.textContent = countrySpan.textContent;
-        }
-        countVisibleCountries++;
-      } else {
-        const matches = this.#findMatches(searchValue, countryEl);
-
-        // In the future, we could reorder/rank filtered results based on the match types
-        if (matches.label || matches.alias || matches.iso || matches.currency) {
-          countryEl.removeAttribute('hidden');
-          const countrySpan = countryEl.querySelector('.country');
-          if (countrySpan) {
-            countrySpan.innerHTML = this.#highlightMatches(countrySpan.textContent, searchValue);
-          }
-          countVisibleCountries++;
-        } else {
-          countryEl.setAttribute('hidden', '');
-        }
-      }
+      if (this.#filterCountry(countryEl, searchValue)) countVisibleCountries++;
     }
 
     if (liveRegion && labelResultsCount) {
@@ -308,6 +291,40 @@ class LocalizationFormComponent extends Component {
   }
 
   /**
+   * Shows or hides a single country based on the search value.
+   *
+   * @param {HTMLElement} countryEl - The country element to filter.
+   * @param {string} searchValue - The normalized search value.
+   * @returns {boolean} Whether the country is visible.
+   */
+  #filterCountry(countryEl, searchValue) {
+    if (searchValue === '') {
+      countryEl.removeAttribute('hidden');
+      const countrySpan = countryEl.querySelector('.country');
+      if (countrySpan) {
+        // eslint-disable-next-line no-self-assign
+        countrySpan.textContent = countrySpan.textContent;
+      }
+      return true;
+    }
+
+    const matches = this.#findMatches(searchValue, countryEl);
+
+    // In the future, we could reorder/rank filtered results based on the match types
+    if (matches.label || matches.alias || matches.iso || matches.currency) {
+      countryEl.removeAttribute('hidden');
+      const countrySpan = countryEl.querySelector('.country');
+      if (countrySpan) {
+        countrySpan.innerHTML = this.#highlightMatches(countrySpan.textContent, searchValue);
+      }
+      return true;
+    }
+
+    countryEl.setAttribute('hidden', '');
+    return false;
+  }
+
+  /**
    * Changes the focus of the country list items.
    *
    * @param {string} direction - The direction to change the focus.
@@ -315,7 +332,7 @@ class LocalizationFormComponent extends Component {
   #changeCountryFocus(direction) {
     const { countryListItems } = this.refs;
     const focusableItems = countryListItems.filter((item) => !item.hasAttribute('hidden'));
-    const focusedItemIndex = focusableItems.findIndex((item) => item === document.activeElement);
+    const focusedItemIndex = focusableItems.indexOf(/** @type {HTMLElement} */ (document.activeElement));
     const focusedItem = focusableItems[focusedItemIndex];
     let itemToFocus;
 
@@ -481,12 +498,10 @@ class DropdownLocalizationComponent extends Component {
    * @param {KeyboardEvent} event - The event object.
    */
   #handleKeyUp = (event) => {
-    switch (event.key) {
-      case 'Escape':
-        this.hidePanel();
-        event.stopPropagation();
-        this.refs.button?.focus();
-        break;
+    if (event.key === 'Escape') {
+      this.hidePanel();
+      event.stopPropagation();
+      this.refs.button?.focus();
     }
   };
 }

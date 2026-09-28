@@ -51,7 +51,7 @@ export class QuantitySelectorComponent extends Component {
    * @param {number} cartQty - The quantity currently in cart for this variant
    */
   setCartQuantity(cartQty) {
-    this.refs.quantityInput.setAttribute('data-cart-quantity', cartQty.toString());
+    this.refs.quantityInput.dataset.cartQuantity = cartQty.toString();
     this.updateCartQuantity();
   }
 
@@ -96,7 +96,7 @@ export class QuantitySelectorComponent extends Component {
    */
   updateConstraints(min, max, step) {
     const { quantityInput } = this.refs;
-    const currentValue = parseInt(quantityInput.value) || 0;
+    const currentValue = Number.parseInt(quantityInput.value) || 0;
 
     quantityInput.min = min;
     if (max) {
@@ -139,7 +139,7 @@ export class QuantitySelectorComponent extends Component {
       max: parseIntOrDefault(quantityInput.max, null),
       step: parseIntOrDefault(quantityInput.step, 1),
       value: parseIntOrDefault(quantityInput.value, 0),
-      cartQuantity: parseIntOrDefault(quantityInput.getAttribute('data-cart-quantity'), 0),
+      cartQuantity: parseIntOrDefault(quantityInput.dataset.cartQuantity, 0),
     };
   }
 
@@ -235,7 +235,7 @@ export class QuantitySelectorComponent extends Component {
     const effectiveMax = this.getEffectiveMax();
 
     // Snap to bounds
-    const quantity = Math.min(effectiveMax ?? Infinity, Math.max(min, parseInt(event.target.value) || 0));
+    const quantity = Math.min(effectiveMax ?? Infinity, Math.max(min, Number.parseInt(event.target.value) || 0));
 
     // Validate step increment
     if ((quantity - min) % step !== 0) {
@@ -255,7 +255,7 @@ export class QuantitySelectorComponent extends Component {
    */
   onQuantityChange() {
     const { quantityInput } = this.refs;
-    const newValue = parseInt(quantityInput.value);
+    const newValue = Number.parseInt(quantityInput.value);
 
     this.dispatchEvent(new QuantitySelectorUpdateEvent(newValue, Number(quantityInput.dataset.cartLine) || undefined));
   }

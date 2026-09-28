@@ -167,7 +167,7 @@ export class LayeredSlideshowComponent extends Component {
     const panel = /** @type {HTMLElement} */ (event.currentTarget);
     const focusable = this.#getFocusableElements(panel);
     const firstFocusable = focusable[0];
-    const lastFocusable = focusable[focusable.length - 1];
+    const lastFocusable = focusable.at(-1);
 
     if (event.shiftKey) {
       const isAtStart =
@@ -201,7 +201,7 @@ export class LayeredSlideshowComponent extends Component {
     if (!panel) return;
 
     const focusable = this.#getFocusableElements(panel);
-    const target = position === 'end' ? focusable[focusable.length - 1] : focusable[0];
+    const target = position === 'end' ? focusable.at(-1) : focusable[0];
 
     requestAnimationFrame(() => (target ?? panel).focus());
   }
@@ -230,7 +230,7 @@ export class LayeredSlideshowComponent extends Component {
 
     if (wasMobile !== this.#isMobile) {
       const { container } = this.refs;
-      container.setAttribute('data-instant-transitions', '');
+      container.dataset.instantTransitions = '';
 
       this.#clearHeightStyles();
       // Re-calculate height first so grid calculation has correct container dimensions
@@ -239,7 +239,7 @@ export class LayeredSlideshowComponent extends Component {
       this.#setupEventListeners();
 
       requestAnimationFrame(() => {
-        container.removeAttribute('data-instant-transitions');
+        delete container.dataset.instantTransitions;
       });
     }
   };
@@ -274,7 +274,7 @@ export class LayeredSlideshowComponent extends Component {
     if (!tabs || index === this.#active || index < 0 || index >= tabs.length) return;
 
     if (instant) {
-      container.setAttribute('data-instant-transitions', '');
+      container.dataset.instantTransitions = '';
     }
 
     this.#active = index;
@@ -284,7 +284,7 @@ export class LayeredSlideshowComponent extends Component {
       // Double rAF to ensure layout is fully settled before re-enabling transitions
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          container.removeAttribute('data-instant-transitions');
+          delete container.dataset.instantTransitions;
         });
       });
     }
@@ -395,19 +395,9 @@ export class LayeredSlideshowComponent extends Component {
     const move = Math.abs(delta);
 
     if (!this.#drag.dragging && move >= DRAG_THRESHOLD) {
-      if (this.#drag.target === -1) {
-        if (delta > 0 && this.#active > 0) {
-          this.#drag.target = this.#active - 1;
-          this.#drag.left = false;
-        } else if (delta < 0 && this.#active < tabs.length - 1) {
-          this.#drag.target = this.#active + 1;
-          this.#drag.left = true;
-        } else {
-          return;
-        }
-      }
+      if (this.#drag.target === -1 && !this.#assignDragTarget(this.#drag, delta, tabs.length)) return;
       this.#drag.dragging = true;
-      container.setAttribute('data-dragging', '');
+      container.dataset.dragging = '';
     }
 
     if (!this.#drag.dragging) return;
@@ -432,6 +422,27 @@ export class LayeredSlideshowComponent extends Component {
 
     container.style.setProperty('--active-tab', sizes.join(' '));
     this.#drag.progress = progress;
+  }
+
+  /**
+   * Picks the adjacent tab to drag towards based on the drag direction.
+   * @param {DragState} drag
+   * @param {number} delta
+   * @param {number} tabCount
+   * @returns {boolean} Whether a drag target could be assigned.
+   */
+  #assignDragTarget(drag, delta, tabCount) {
+    if (delta > 0 && this.#active > 0) {
+      drag.target = this.#active - 1;
+      drag.left = false;
+      return true;
+    }
+    if (delta < 0 && this.#active < tabCount - 1) {
+      drag.target = this.#active + 1;
+      drag.left = true;
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -518,7 +529,7 @@ export class LayeredSlideshowComponent extends Component {
       // Temporarily clear inline style to measure CSS-defined min-height
       const savedMinHeight = this.style.minHeight;
       this.style.minHeight = '';
-      const cssMinHeight = parseFloat(getComputedStyle(this).minHeight) || 0;
+      const cssMinHeight = Number.parseFloat(getComputedStyle(this).minHeight) || 0;
       this.style.minHeight = savedMinHeight;
 
       // Only set inline heights when content exceeds CSS min-height
@@ -552,7 +563,7 @@ export class LayeredSlideshowComponent extends Component {
       // CSS variable is set on component, try reading from container (inherited) or component directly
       const inheritedValue = containerStyles.getPropertyValue('--layered-panel-height-mobile');
       const componentValue = getComputedStyle(this).getPropertyValue('--layered-panel-height-mobile');
-      minPanelHeight = parseFloat(inheritedValue || componentValue) || 260;
+      minPanelHeight = Number.parseFloat(inheritedValue || componentValue) || 260;
     }
 
     const requiredActiveHeight = Math.max(minPanelHeight, contentHeight);
@@ -585,8 +596,8 @@ export class LayeredSlideshowComponent extends Component {
       inner.style.height = 'auto';
 
       const styles = getComputedStyle(content);
-      const paddingTop = parseFloat(styles.paddingBlockStart || styles.paddingTop) || 0;
-      const paddingBottom = parseFloat(styles.paddingBlockEnd || styles.paddingBottom) || 0;
+      const paddingTop = Number.parseFloat(styles.paddingBlockStart || styles.paddingTop) || 0;
+      const paddingBottom = Number.parseFloat(styles.paddingBlockEnd || styles.paddingBottom) || 0;
 
       const height = (inner.scrollHeight || 0) + paddingTop + paddingBottom;
       if (height > max) max = height;

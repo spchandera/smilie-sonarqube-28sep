@@ -27,9 +27,7 @@ export const MORPH_OPTIONS = {
     if (
       newNode instanceof HTMLTemplateElement &&
       newNode.shadowRootMode === 'open' &&
-      oldNode.parentElement &&
-      newNode.parentElement &&
-      oldNode.parentElement.tagName === newNode.parentElement.tagName &&
+      oldNode.parentElement?.tagName === newNode.parentElement?.tagName &&
       oldNode.parentElement?.shadowRoot != null
     ) {
       // Ignore template elements of components that are already initialized
@@ -45,31 +43,9 @@ export const MORPH_OPTIONS = {
   },
   onBeforeUpdate(oldNode, newNode) {
     if (oldNode instanceof Element && newNode instanceof Element) {
-      const attributes = ['product-grid-view', 'data-current-checked', 'data-previous-checked', 'cart-summary-sticky'];
-
-      for (const attribute of attributes) {
-        const oldValue = oldNode.getAttribute(attribute);
-        const newValue = newNode.getAttribute(attribute);
-
-        if (oldValue && oldValue !== newValue) {
-          newNode.setAttribute(attribute, oldValue);
-        }
-      }
-
-      // Special case for elements that need to keep their style
-      const elements = ['floating-panel-component', 'fieldset.variant-option'];
-
-      for (const element of elements) {
-        if (oldNode.matches(element) && newNode.matches(element)) {
-          const oldStyle = oldNode.getAttribute('style');
-          if (oldStyle) newNode.setAttribute('style', oldStyle);
-        }
-      }
-
-      // Preserve temporary view transition name
-      if (oldNode instanceof HTMLElement && newNode instanceof HTMLElement && oldNode.style.viewTransitionName) {
-        newNode.style.viewTransitionName = oldNode.style.viewTransitionName;
-      }
+      preservePersistentAttributes(oldNode, newNode);
+      preservePersistentStyles(oldNode, newNode);
+      preserveViewTransitionName(oldNode, newNode);
     }
   },
   onAfterUpdate(node) {
@@ -78,6 +54,72 @@ export const MORPH_OPTIONS = {
     }
   },
 };
+
+/**
+ * Keeps runtime-managed attribute values from the old element on the new element
+ * @param {Element} oldNode - The existing element
+ * @param {Element} newNode - The incoming element
+ */
+function preservePersistentAttributes(oldNode, newNode) {
+  const attributes = ['product-grid-view', 'data-current-checked', 'data-previous-checked', 'cart-summary-sticky'];
+
+  for (const attribute of attributes) {
+    const oldValue = oldNode.getAttribute(attribute);
+    const newValue = newNode.getAttribute(attribute);
+
+    if (oldValue && oldValue !== newValue) {
+      newNode.setAttribute(attribute, oldValue);
+    }
+  }
+}
+
+/**
+ * Special case for elements that need to keep their style
+ * @param {Element} oldNode - The existing element
+ * @param {Element} newNode - The incoming element
+ */
+function preservePersistentStyles(oldNode, newNode) {
+  const elements = ['floating-panel-component', 'fieldset.variant-option'];
+
+  for (const element of elements) {
+    if (oldNode.matches(element) && newNode.matches(element)) {
+      const oldStyle = oldNode.getAttribute('style');
+      if (oldStyle) newNode.setAttribute('style', oldStyle);
+    }
+  }
+}
+
+/**
+ * Preserve temporary view transition name
+ * @param {Element} oldNode - The existing element
+ * @param {Element} newNode - The incoming element
+ */
+function preserveViewTransitionName(oldNode, newNode) {
+  if (oldNode instanceof HTMLElement && newNode instanceof HTMLElement && oldNode.style.viewTransitionName) {
+    newNode.style.viewTransitionName = oldNode.style.viewTransitionName;
+  }
+}
+
+/**
+ * Checks whether a node is an element carrying the given data attribute
+ * @param {Node} node - The node to check
+ * @param {string} key - The dataset key (camelCase)
+ * @returns {boolean}
+ */
+function hasDataAttribute(node, key) {
+  return node instanceof Element && /** @type {HTMLElement} */ (node).dataset?.[key] !== undefined;
+}
+
+/**
+ * Checks whether both nodes are elements carrying the given data attribute
+ * @param {Node} oldNode - The existing node
+ * @param {Node} newNode - The incoming node
+ * @param {string} key - The dataset key (camelCase)
+ * @returns {boolean}
+ */
+function bothHaveDataAttribute(oldNode, newNode, key) {
+  return hasDataAttribute(oldNode, key) && hasDataAttribute(newNode, key);
+}
 
 /**
  * Morphs one DOM tree into another by comparing nodes and applying minimal changes
@@ -198,25 +240,11 @@ function walk(newNode, oldNode, options) {
 
   // Check node type and tag name first
   if (newNode.nodeType !== oldNode.nodeType) return newNode;
-  if (newNode instanceof Element && oldNode instanceof Element) {
-    // Skip morphing if the node is shopify-accelerated-checkout-cart https://shopify.dev/docs/storefronts/themes/pricing-payments/accelerated-checkout#implement-accelerated-checkout-buttons-on-cart
-    if (oldNode.tagName === 'SHOPIFY-ACCELERATED-CHECKOUT-CART') return oldNode;
-
-    if (newNode.tagName !== oldNode.tagName) return newNode;
-
-    // Only check keys for elements, and only if both nodes have keys
-    const newKey = getNodeKey(newNode, options);
-    const oldKey = getNodeKey(oldNode, options);
-    if (newKey && oldKey && newKey !== oldKey) return newNode;
-  }
+  const elementResult = getUnmorphableElementResult(newNode, oldNode, options);
+  if (elementResult) return elementResult;
 
   // We can morph, update the node and its children
-  if (
-    oldNode instanceof Element &&
-    oldNode.hasAttribute('data-skip-node-update') &&
-    newNode instanceof Element &&
-    newNode.hasAttribute('data-skip-node-update')
-  ) {
+  if (bothHaveDataAttribute(oldNode, newNode, 'skipNodeUpdate')) {
     // This is a special case where we don't want to morph the node, but we want to morph the children
     updateChildren(newNode, oldNode, options);
   } else {
@@ -230,6 +258,29 @@ function walk(newNode, oldNode, options) {
 }
 
 /**
+ * Checks element-specific conditions that prevent two elements from being morphed
+ * @param {Node} newNode - The new node to morph to
+ * @param {Node} oldNode - The old node to morph from
+ * @param {Options} options - The options object
+ * @returns {Node | null} The node `walk` should return early, or null when morphing can continue
+ */
+function getUnmorphableElementResult(newNode, oldNode, options) {
+  if (!(newNode instanceof Element && oldNode instanceof Element)) return null;
+
+  // Skip morphing if the node is shopify-accelerated-checkout-cart https://shopify.dev/docs/storefronts/themes/pricing-payments/accelerated-checkout#implement-accelerated-checkout-buttons-on-cart
+  if (oldNode.tagName === 'SHOPIFY-ACCELERATED-CHECKOUT-CART') return oldNode;
+
+  if (newNode.tagName !== oldNode.tagName) return newNode;
+
+  // Only check keys for elements, and only if both nodes have keys
+  const newKey = getNodeKey(newNode, options);
+  const oldKey = getNodeKey(oldNode, options);
+  if (newKey && oldKey && newKey !== oldKey) return newNode;
+
+  return null;
+}
+
+/**
  * Core morphing function that updates attributes and special elements
  * @param {Node} newNode - Source node with desired state
  * @param {Node} oldNode - Target node to update
@@ -238,6 +289,18 @@ function walk(newNode, oldNode, options) {
 function updateNode(newNode, oldNode, options) {
   options.onBeforeUpdate?.(oldNode, newNode);
 
+  syncOpenState(newNode, oldNode);
+  preserveSlotAndSizes(newNode, oldNode);
+  syncAttributesOrValue(newNode, oldNode);
+  updateSpecialElement(newNode, oldNode);
+}
+
+/**
+ * Keeps the open state of details and dialog elements unless the new node declares it
+ * @param {Node} newNode - Source node with desired state
+ * @param {Node} oldNode - Target node to update
+ */
+function syncOpenState(newNode, oldNode) {
   if (
     (newNode instanceof HTMLDetailsElement && oldNode instanceof HTMLDetailsElement) ||
     (newNode instanceof HTMLDialogElement && oldNode instanceof HTMLDialogElement)
@@ -246,7 +309,14 @@ function updateNode(newNode, oldNode, options) {
       newNode.open = oldNode.open;
     }
   }
+}
 
+/**
+ * Keeps the old slot and sizes attributes on the new node
+ * @param {Node} newNode - Source node with desired state
+ * @param {Node} oldNode - Target node to update
+ */
+function preserveSlotAndSizes(newNode, oldNode) {
   if (oldNode instanceof HTMLElement && newNode instanceof HTMLElement) {
     for (const attr of ['slot', 'sizes']) {
       const oldValue = oldNode.getAttribute(attr);
@@ -257,7 +327,14 @@ function updateNode(newNode, oldNode, options) {
       }
     }
   }
+}
 
+/**
+ * Copies attributes for elements, or the node value for text and comment nodes
+ * @param {Node} newNode - Source node with desired state
+ * @param {Node} oldNode - Target node to update
+ */
+function syncAttributesOrValue(newNode, oldNode) {
   if (newNode instanceof Element && oldNode instanceof Element) {
     if (!oldNode.isEqualNode(newNode)) {
       copyAttributes(newNode, oldNode);
@@ -267,8 +344,14 @@ function updateNode(newNode, oldNode, options) {
       oldNode.nodeValue = newNode.nodeValue;
     }
   }
+}
 
-  // Handle special elements
+/**
+ * Handle special elements (inputs, options and textareas)
+ * @param {Node} newNode - Source node with desired state
+ * @param {Node} oldNode - Target node to update
+ */
+function updateSpecialElement(newNode, oldNode) {
   if (newNode instanceof HTMLInputElement && oldNode instanceof HTMLInputElement) {
     updateInput(newNode, oldNode);
   } else if (newNode instanceof HTMLOptionElement && oldNode instanceof HTMLOptionElement) {
@@ -316,50 +399,70 @@ function copyAttributes(newNode, oldNode) {
 
   // Update or add new attributes
   for (const attr of Array.from(newAttrs)) {
-    const { name: attrName, namespaceURI: attrNamespaceURI, value: attrValue } = attr;
-    const localName = attr.localName || attrName;
-
-    if (attrName === 'src' || attrName === 'href' || attrName === 'srcset' || attrName === 'poster') {
-      // Skip updating resource attributes when the value hasn't changed
-      // to prevent unnecessary network requests
-      if (oldNode.getAttribute(attrName) === attrValue) continue;
-    }
-
-    if (attrNamespaceURI) {
-      const fromValue = oldNode.getAttributeNS(attrNamespaceURI, localName);
-      if (fromValue !== attrValue) {
-        oldNode.setAttributeNS(attrNamespaceURI, localName, attrValue);
-      }
-    } else {
-      if (!oldNode.hasAttribute(attrName)) {
-        oldNode.setAttribute(attrName, attrValue);
-      } else {
-        const fromValue = oldNode.getAttribute(attrName);
-        if (fromValue !== attrValue) {
-          if (attrValue === 'null' || attrValue === 'undefined') {
-            oldNode.removeAttribute(attrName);
-          } else {
-            oldNode.setAttribute(attrName, attrValue);
-          }
-        }
-      }
-    }
+    copyAttribute(attr, oldNode);
   }
 
   // Remove old attributes not present in new node
+  // (`Attr.specified` is deprecated and always true, so every attribute is considered)
   for (const attr of Array.from(oldAttrs)) {
-    if (attr.specified === false) continue;
+    removeAttributeIfMissing(attr, newNode, oldNode);
+  }
+}
 
-    const { name: attrName, namespaceURI: attrNamespaceURI } = attr;
-    const localName = attr.localName || attrName;
+/**
+ * Copies a single attribute onto the old node when its value differs
+ * @param {Attr} attr - The attribute from the new node
+ * @param {Element} oldNode - The existing node to update attributes on
+ */
+function copyAttribute(attr, oldNode) {
+  const { name: attrName, namespaceURI: attrNamespaceURI, value: attrValue } = attr;
+  const localName = attr.localName || attrName;
 
-    if (attrNamespaceURI) {
-      if (!newNode.hasAttributeNS(attrNamespaceURI, localName)) {
-        oldNode.removeAttributeNS(attrNamespaceURI, localName);
-      }
-    } else if (!newNode.hasAttribute(attrName)) {
-      oldNode.removeAttribute(attrName);
+  // Skip updating resource attributes when the value hasn't changed
+  // to prevent unnecessary network requests
+  if (isResourceAttribute(attrName) && oldNode.getAttribute(attrName) === attrValue) return;
+
+  if (attrNamespaceURI) {
+    const fromValue = oldNode.getAttributeNS(attrNamespaceURI, localName);
+    if (fromValue !== attrValue) {
+      oldNode.setAttributeNS(attrNamespaceURI, localName, attrValue);
     }
+  } else if (!oldNode.hasAttribute(attrName)) {
+    oldNode.setAttribute(attrName, attrValue);
+  } else if (oldNode.getAttribute(attrName) !== attrValue) {
+    if (attrValue === 'null' || attrValue === 'undefined') {
+      oldNode.removeAttribute(attrName);
+    } else {
+      oldNode.setAttribute(attrName, attrValue);
+    }
+  }
+}
+
+/**
+ * Checks whether an attribute references a network resource
+ * @param {string} attrName - The attribute name
+ * @returns {boolean}
+ */
+function isResourceAttribute(attrName) {
+  return attrName === 'src' || attrName === 'href' || attrName === 'srcset' || attrName === 'poster';
+}
+
+/**
+ * Removes an attribute from the old node when the new node no longer has it
+ * @param {Attr} attr - The attribute from the old node
+ * @param {Element} newNode - The new node to compare against
+ * @param {Element} oldNode - The existing node to update attributes on
+ */
+function removeAttributeIfMissing(attr, newNode, oldNode) {
+  const { name: attrName, namespaceURI: attrNamespaceURI } = attr;
+  const localName = attr.localName || attrName;
+
+  if (attrNamespaceURI) {
+    if (!newNode.hasAttributeNS(attrNamespaceURI, localName)) {
+      oldNode.removeAttributeNS(attrNamespaceURI, localName);
+    }
+  } else if (!newNode.hasAttribute(attrName)) {
+    oldNode.removeAttribute(attrName);
   }
 }
 
@@ -455,21 +558,15 @@ function recreateAppBlockScripts(container) {
  * @param {Options} options - The options object
  */
 function updateChildren(newNode, oldNode, options) {
-  if (
-    oldNode instanceof Element &&
-    oldNode.hasAttribute('data-skip-subtree-update') &&
-    newNode instanceof Element &&
-    newNode.hasAttribute('data-skip-subtree-update')
-  ) {
+  if (bothHaveDataAttribute(oldNode, newNode, 'skipSubtreeUpdate')) {
     return;
   }
 
-  let oldChild, newChild, morphed, oldMatch;
   let offset = 0;
 
   for (let i = 0; ; i++) {
-    oldChild = oldNode.childNodes[i];
-    newChild = newNode.childNodes[i - offset];
+    const oldChild = oldNode.childNodes[i];
+    const newChild = newNode.childNodes[i - offset];
 
     // Both nodes are empty, do nothing
     if (!oldChild && !newChild) {
@@ -478,7 +575,7 @@ function updateChildren(newNode, oldNode, options) {
 
     // There is no new child, remove old
     if (!newChild) {
-      oldChild && oldNode.removeChild(oldChild);
+      oldChild?.remove();
       i--;
       continue;
     }
@@ -492,51 +589,86 @@ function updateChildren(newNode, oldNode, options) {
 
     // Both nodes are the same, morph
     if (same(newChild, oldChild, options)) {
-      morphed = walk(newChild, oldChild, options);
-      if (morphed !== oldChild) {
-        oldNode.replaceChild(morphed, oldChild);
-        offset++;
-      }
+      offset += morphAndReplace(newChild, oldChild, options);
       continue;
     }
 
     if (options.reject?.(oldChild, newChild)) {
-      newNode.removeChild(newChild);
+      newChild.remove();
       i--;
       continue;
     }
 
-    // Try to find a matching node to reorder
-    oldMatch = null;
-    for (let j = i; j < oldNode.childNodes.length; j++) {
-      const potentialOldNode = oldNode.childNodes[j];
-
-      if (potentialOldNode && same(potentialOldNode, newChild, options)) {
-        oldMatch = potentialOldNode;
-        break;
-      }
-    }
-
-    if (oldMatch) {
-      morphed = walk(newChild, oldMatch, options);
-      if (morphed !== oldMatch) offset++;
-      oldNode.insertBefore(morphed, oldChild);
-    } else if (!getNodeKey(newChild, options) && !getNodeKey(oldChild, options)) {
-      morphed = walk(newChild, oldChild, options);
-      if (morphed !== oldChild) {
-        oldNode.replaceChild(morphed, oldChild);
-        offset++;
-      }
-    } else {
-      oldNode.insertBefore(newChild, oldChild);
-      offset++;
-    }
+    offset += reconcileChild(newChild, oldChild, oldNode, i, options);
   }
 
   // Recreate app block scripts to bypass browser script deduplication
   if (oldNode instanceof Element) {
     recreateAppBlockScripts(oldNode);
   }
+}
+
+/**
+ * Morphs the old child and replaces it when the morph produced a different node
+ * @param {ChildNode} newChild - The new child node
+ * @param {ChildNode} oldChild - The existing child node
+ * @param {Options} options - The options object
+ * @returns {number} The offset increment (1 when the old child was replaced, otherwise 0)
+ */
+function morphAndReplace(newChild, oldChild, options) {
+  const morphed = walk(newChild, oldChild, options);
+  if (morphed === oldChild) return 0;
+
+  oldChild.replaceWith(morphed);
+  return 1;
+}
+
+/**
+ * Reconciles a new child that does not match the old child at the same position,
+ * by reordering a matching old child, morphing in place, or inserting the new child
+ * @param {ChildNode} newChild - The new child node
+ * @param {ChildNode} oldChild - The existing child node at the current position
+ * @param {Node} oldNode - The existing parent node
+ * @param {number} index - The current child index in the old parent
+ * @param {Options} options - The options object
+ * @returns {number} The offset increment
+ */
+function reconcileChild(newChild, oldChild, oldNode, index, options) {
+  // Try to find a matching node to reorder
+  const oldMatch = findMatchingChild(oldNode, index, newChild, options);
+
+  if (oldMatch) {
+    const morphed = walk(newChild, oldMatch, options);
+    oldChild.before(morphed);
+    return morphed === oldMatch ? 0 : 1;
+  }
+
+  if (!getNodeKey(newChild, options) && !getNodeKey(oldChild, options)) {
+    return morphAndReplace(newChild, oldChild, options);
+  }
+
+  oldChild.before(newChild);
+  return 1;
+}
+
+/**
+ * Finds the first old child, from the given index onwards, that is the same as the new child
+ * @param {Node} oldNode - The existing parent node
+ * @param {number} startIndex - The index to start searching from
+ * @param {Node} newChild - The new child node to match
+ * @param {Options} options - The options object
+ * @returns {ChildNode | null} The matching old child, if any
+ */
+function findMatchingChild(oldNode, startIndex, newChild, options) {
+  for (let j = startIndex; j < oldNode.childNodes.length; j++) {
+    const potentialOldNode = oldNode.childNodes[j];
+
+    if (potentialOldNode && same(potentialOldNode, newChild, options)) {
+      return potentialOldNode;
+    }
+  }
+
+  return null;
 }
 
 /**

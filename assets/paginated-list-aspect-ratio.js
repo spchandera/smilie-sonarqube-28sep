@@ -41,7 +41,7 @@ export class PaginatedListAspectRatioHelper {
    * @param {HTMLElement} templateCard - The template card gallery element to get the image ratio from
    */
   #storeImageRatioSettings(templateCard) {
-    this.#imageRatioSetting = templateCard.getAttribute('data-image-ratio');
+    this.#imageRatioSetting = templateCard.dataset.imageRatio ?? null;
   }
 
   /**
@@ -57,7 +57,7 @@ export class PaginatedListAspectRatioHelper {
     newCardGalleries.forEach((gallery) => {
       if (!(gallery instanceof HTMLElement)) return;
 
-      const productId = gallery.getAttribute('data-product-id');
+      const productId = gallery.dataset.productId;
       if (productId && productRatioCache.has(productId)) {
         this.#applyAspectRatioToGallery(gallery, productRatioCache.get(productId));
         return;
@@ -166,6 +166,6 @@ export class PaginatedListAspectRatioHelper {
    */
   #markAsProcessed(gallery) {
     if (!(gallery instanceof HTMLElement)) return;
-    gallery.setAttribute('data-aspect-ratio-applied', 'true');
+    gallery.dataset.aspectRatioApplied = 'true';
   }
 }

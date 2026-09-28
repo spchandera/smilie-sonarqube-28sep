@@ -17,107 +17,132 @@ const slideshowState = {
 };
 
 /**
+ * Disables navigation on the product cards of the section when a product-card block itself is selected.
+ * Not a child block within the product card.
+ * @param {HTMLElement} target - The selected block element
+ */
+function updateProductCardNavigation(target) {
+  // First, remove data-no-navigation from any previously selected product cards
+  document.querySelectorAll('product-card[data-no-navigation]').forEach((card) => {
+    if (card instanceof HTMLElement) {
+      delete card.dataset.noNavigation;
+    }
+  });
+
+  if (target.tagName !== 'PRODUCT-CARD') return;
+
+  const section = target.closest('.shopify-section');
+  if (!section) return;
+
+  const productCardsInSection = section.querySelectorAll('product-card');
+
+  productCardsInSection.forEach((card) => {
+    if (card instanceof HTMLElement) {
+      card.dataset.noNavigation = 'true';
+    }
+  });
+}
+
+/**
+ * Keeps track of the selected slide for the slideshow
+ * @param {HTMLElement} target - The selected block element
+ * @returns {boolean} False when the block select handling should stop
+ */
+function selectSlideshowSlide(target) {
+  const slide = target.closest('slideshow-slide');
+  if (!slide) return true;
+
+  /** @type {import('./slideshow').Slideshow | null} */
+  const slideshow = slide.closest('slideshow-component');
+  if (!slideshow) return true;
+
+  const index = Array.from(slide.parentElement?.children ?? []).indexOf(slide);
+
+  if (index === -1) return false;
+
+  // Compare before updating to detect if same slide is selected again
+  const isAlreadyActive = index === slideshowState.activeSlideIndex;
+  slideshowState.activeSlideIndex = index;
+  // Pause autoplay
+  slideshow.pause();
+  slideshow.select(index, undefined, { animate: !isAlreadyActive });
+
+  return true;
+}
+
+/**
+ * Keeps track of the selected slide for the carousel
+ * @param {HTMLElement} target - The selected block element
+ * @returns {boolean} False when the block select handling should stop
+ */
+function selectCarouselCard(target) {
+  const carouselCard = target.closest('[data-carousel-card]');
+  if (!carouselCard) return true;
+
+  /** @type {import('./slideshow').Slideshow | null} */
+  const slideshow = carouselCard.closest('slideshow-component');
+  if (!slideshow) return true;
+
+  const cards = Array.from(carouselCard.parentElement?.children ?? []);
+
+  const index = cards.indexOf(carouselCard);
+
+  if (index === -1) return false;
+
+  // Compare before updating to detect if same slide is selected again
+  const isAlreadyActive = index === carouselState.activeSlideIndex;
+  carouselState.activeSlideIndex = index;
+  const targetCard = cards[index];
+
+  if (targetCard instanceof HTMLElement) {
+    targetCard.scrollIntoView({ behavior: isAlreadyActive ? 'instant' : 'smooth', inline: 'center' });
+  }
+
+  return true;
+}
+
+/**
+ * Keeps track of the selected slide for the layered slideshow
+ * @param {HTMLElement} target - The selected block element
+ */
+function selectLayeredSlideshowPanel(target) {
+  const layeredSlideshowPanel = target.closest('layered-slideshow-component [role="tabpanel"]');
+  if (!layeredSlideshowPanel) return;
+
+  /** @type {import('./layered-slideshow').LayeredSlideshowComponent | null} */
+  const layeredSlideshow = layeredSlideshowPanel.closest('layered-slideshow-component');
+  if (!layeredSlideshow) return;
+
+  const index = Array.from(layeredSlideshow.querySelectorAll('[role="tabpanel"]')).indexOf(layeredSlideshowPanel);
+  if (index === -1) return;
+
+  // Compare before updating to detect if same slide is selected again
+  const isAlreadyActive = index === layeredSlideshowState.activeSlideIndex;
+  layeredSlideshowState.activeSlideIndex = index;
+
+  // Use instant transition if the same slide is selected again
+  layeredSlideshow.select(index, { instant: isAlreadyActive });
+}
+
+/**
  * @param {Event} event
  */
 document.addEventListener('shopify:block:select', function (event) {
-  if (event.target instanceof HTMLElement) {
-    // Check if the selected element is specifically a product-card block itself
-    // Not a child block within the product card
+  if (!(event.target instanceof HTMLElement)) return;
 
-    // First, remove data-no-navigation from any previously selected product cards
-    document.querySelectorAll('product-card[data-no-navigation]').forEach((card) => {
-      if (card instanceof HTMLElement) {
-        card.removeAttribute('data-no-navigation');
-      }
-    });
+  updateProductCardNavigation(event.target);
 
-    if (event.target.tagName === 'PRODUCT-CARD') {
-      const section = event.target.closest('.shopify-section');
+  if (!selectSlideshowSlide(event.target)) return;
+  if (!selectCarouselCard(event.target)) return;
 
-      if (section) {
-        const productCardsInSection = section.querySelectorAll('product-card');
-
-        productCardsInSection.forEach((card) => {
-          if (card instanceof HTMLElement) {
-            card.setAttribute('data-no-navigation', 'true');
-          }
-        });
-      }
-    }
-
-    // Keep track of the selected slide for the slideshow
-    const slide = event.target.closest('slideshow-slide');
-
-    if (slide) {
-      /** @type {import('./slideshow').Slideshow | null} */
-      const slideshow = slide.closest('slideshow-component');
-
-      if (slideshow) {
-        const index = Array.from(slide.parentElement?.children ?? []).indexOf(slide);
-
-        if (index === -1) return;
-
-        // Compare before updating to detect if same slide is selected again
-        const isAlreadyActive = index === slideshowState.activeSlideIndex;
-        slideshowState.activeSlideIndex = index;
-        // Pause autoplay
-        slideshow.pause();
-        slideshow.select(index, undefined, { animate: isAlreadyActive ? false : true });
-      }
-    }
-
-    // Keep track of the selected slide for the carousel
-    const carouselCard = event.target.closest('[data-carousel-card]');
-
-    if (carouselCard) {
-      /** @type {import('./slideshow').Slideshow | null} */
-      const slideshow = carouselCard.closest('slideshow-component');
-
-      if (slideshow) {
-        const cards = Array.from(carouselCard.parentElement?.children ?? []);
-        if (!cards) return;
-
-        const index = cards.indexOf(carouselCard);
-
-        if (index === -1) return;
-
-        // Compare before updating to detect if same slide is selected again
-        const isAlreadyActive = index === carouselState.activeSlideIndex;
-        carouselState.activeSlideIndex = index;
-        const targetCard = cards[index];
-
-        if (targetCard instanceof HTMLElement) {
-          targetCard.scrollIntoView({ behavior: isAlreadyActive ? 'instant' : 'smooth', inline: 'center' });
-        }
-      }
-    }
-
-    // Keep track of the selected slide for the layered slideshow
-    const layeredSlideshowPanel = event.target.closest('layered-slideshow-component [role="tabpanel"]');
-
-    if (layeredSlideshowPanel) {
-      /** @type {import('./layered-slideshow').LayeredSlideshowComponent | null} */
-      const layeredSlideshow = layeredSlideshowPanel.closest('layered-slideshow-component');
-      if (!layeredSlideshow) return;
-
-      const index = Array.from(layeredSlideshow.querySelectorAll('[role="tabpanel"]')).indexOf(layeredSlideshowPanel);
-      if (index === -1) return;
-
-      // Compare before updating to detect if same slide is selected again
-      const isAlreadyActive = index === layeredSlideshowState.activeSlideIndex;
-      layeredSlideshowState.activeSlideIndex = index;
-
-      // Use instant transition if the same slide is selected again
-      layeredSlideshow.select(index, { instant: isAlreadyActive });
-    }
-  }
+  selectLayeredSlideshowPanel(event.target);
 });
 
 document.addEventListener('shopify:block:deselect', function (event) {
   if (event.target instanceof HTMLElement) {
     // Remove data-no-navigation when product card is deselected
     if (event.target.tagName === 'PRODUCT-CARD') {
-      event.target.removeAttribute('data-no-navigation');
+      delete event.target.dataset.noNavigation;
     }
 
     /** @type {import('./slideshow').Slideshow | null} */

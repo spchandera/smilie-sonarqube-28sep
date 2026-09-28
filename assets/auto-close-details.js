@@ -4,7 +4,7 @@
       (element) => {
         const closingOn = window.innerWidth < 750 ? 'mobile' : 'desktop';
         return (
-          element.getAttribute('data-auto-close-details')?.includes(closingOn) &&
+          element.dataset.autoCloseDetails?.includes(closingOn) &&
           !(event.target instanceof Node && element.contains(event.target))
         );
       }

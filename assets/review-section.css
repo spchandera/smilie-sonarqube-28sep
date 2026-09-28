@@ -17,7 +17,7 @@ body .stamped-container {
 .stamped-container .summary-rating-bar>div {
   background: #F3A9A9 !important;
   border-radius: 30px;
-  color: #fff !important;
+  color: #000 !important;
   font-size: 0;
   padding: 1.4531px;
 }

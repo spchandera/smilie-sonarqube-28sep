@@ -75,7 +75,7 @@ class CartDiscount extends Component {
       const data = await response.json();
 
       if (
-        data.discount_codes.find((/** @type {{ code: string; applicable: boolean; }} */ discount) => {
+        data.discount_codes.some((/** @type {{ code: string; applicable: boolean; }} */ discount) => {
           return discount.code === discountCodeValue && discount.applicable === false;
         })
       ) {
@@ -98,7 +98,7 @@ class CartDiscount extends Component {
         if (
           codes.length === existingDiscounts.length &&
           codes.every((/** @type {string} */ code) => existingDiscounts.includes(code)) &&
-          data.discount_codes.find((/** @type {{ code: string; applicable: boolean; }} */ discount) => {
+          data.discount_codes.some((/** @type {{ code: string; applicable: boolean; }} */ discount) => {
             return discount.code === discountCodeValue && discount.applicable === true;
           })
         ) {
@@ -110,7 +110,9 @@ class CartDiscount extends Component {
 
       document.dispatchEvent(new DiscountUpdateEvent(data, this.id));
       morphSection(this.dataset.sectionId, newHtml);
-    } catch (error) {
+    } catch {
+      // Errors are intentionally ignored: aborted requests are superseded by a newer request,
+      // and on failure the current cart UI is left unchanged.
     } finally {
       this.#activeFetch = null;
       cartPerformance.measureFromEvent('discount-update:user-action', event);
@@ -162,7 +164,9 @@ class CartDiscount extends Component {
 
       document.dispatchEvent(new DiscountUpdateEvent(data, this.id));
       morphSection(this.dataset.sectionId, data.sections[this.dataset.sectionId]);
-    } catch (error) {
+    } catch {
+      // Errors are intentionally ignored: aborted requests are superseded by a newer request,
+      // and on failure the current cart UI is left unchanged.
     } finally {
       this.#activeFetch = null;
     }

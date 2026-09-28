@@ -56,7 +56,7 @@ class VolumePricingInfoComponent extends Component {
     let activeTier = null;
     for (const row of rows) {
       row.classList.remove('volume-pricing-info__row--active');
-      if (row instanceof HTMLElement && quantity >= parseInt(row.dataset.quantity || '0')) {
+      if (row instanceof HTMLElement && quantity >= Number.parseInt(row.dataset.quantity || '0')) {
         activeTier = row;
       }
     }

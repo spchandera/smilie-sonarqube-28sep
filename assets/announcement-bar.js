@@ -95,7 +95,7 @@ export class AnnouncementBar extends Component {
 
   get autoplayInterval() {
     const interval = this.getAttribute('autoplay');
-    const value = parseInt(`${interval}`, 10);
+    const value = Number.parseInt(`${interval}`, 10);
 
     if (Number.isNaN(value)) return undefined;
 

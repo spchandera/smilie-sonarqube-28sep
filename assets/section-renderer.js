@@ -76,7 +76,7 @@ class SectionRenderer {
     const sectionUrl = buildSectionRenderingURL(sectionId, url);
 
     let pendingPromise = this.#pendingPromises.get(sectionUrl);
-    if (pendingPromise) return pendingPromise;
+    if (pendingPromise !== undefined) return pendingPromise;
 
     if (useCache) {
       const cachedHTML = this.#cache.get(sectionUrl);

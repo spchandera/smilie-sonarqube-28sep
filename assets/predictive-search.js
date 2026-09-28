@@ -195,49 +195,72 @@ class PredictiveSearchComponent extends Component {
 
     switch (event.key) {
       case 'ArrowDown':
-        this.#isKeyboardNavigation = true;
-        event.preventDefault();
-        this.#currentIndex = currentIndex < totalItems - 1 ? currentIndex + 1 : 0;
+        this.#focusNextItem(event, currentIndex, totalItems);
         break;
 
       case 'Tab':
         if (event.shiftKey) {
-          this.#isKeyboardNavigation = true;
-          event.preventDefault();
-          this.#currentIndex = currentIndex > 0 ? currentIndex - 1 : totalItems - 1;
+          this.#focusPreviousItem(event, currentIndex, totalItems);
         } else {
-          this.#isKeyboardNavigation = true;
-          event.preventDefault();
-          this.#currentIndex = currentIndex < totalItems - 1 ? currentIndex + 1 : 0;
+          this.#focusNextItem(event, currentIndex, totalItems);
         }
         break;
 
       case 'ArrowUp':
-        this.#isKeyboardNavigation = true;
-        event.preventDefault();
-        this.#currentIndex = currentIndex > 0 ? currentIndex - 1 : totalItems - 1;
+        this.#focusPreviousItem(event, currentIndex, totalItems);
         break;
 
-      case 'Enter': {
-        const singleResultContainer = this.refs.predictiveSearchResults.querySelector('[data-single-result-url]');
-        if (singleResultContainer instanceof HTMLElement && singleResultContainer.dataset.singleResultUrl) {
-          event.preventDefault();
-          window.location.href = singleResultContainer.dataset.singleResultUrl;
-          return;
-        }
-
-        if (this.#currentIndex >= 0) {
-          event.preventDefault();
-          this.#currentItem?.querySelector('a')?.click();
-        } else {
-          const searchUrl = new URL(Theme.routes.search_url, location.origin);
-          searchUrl.searchParams.set('q', this.refs.searchInput.value);
-          window.location.href = searchUrl.toString();
-        }
+      case 'Enter':
+        this.#handleEnterKey(event);
         break;
-      }
     }
   };
+
+  /**
+   * Moves keyboard focus to the next result, wrapping to the first.
+   * @param {KeyboardEvent} event - The keyboard event.
+   * @param {number} currentIndex - The current result index.
+   * @param {number} totalItems - The total number of results.
+   */
+  #focusNextItem(event, currentIndex, totalItems) {
+    this.#isKeyboardNavigation = true;
+    event.preventDefault();
+    this.#currentIndex = currentIndex < totalItems - 1 ? currentIndex + 1 : 0;
+  }
+
+  /**
+   * Moves keyboard focus to the previous result, wrapping to the last.
+   * @param {KeyboardEvent} event - The keyboard event.
+   * @param {number} currentIndex - The current result index.
+   * @param {number} totalItems - The total number of results.
+   */
+  #focusPreviousItem(event, currentIndex, totalItems) {
+    this.#isKeyboardNavigation = true;
+    event.preventDefault();
+    this.#currentIndex = currentIndex > 0 ? currentIndex - 1 : totalItems - 1;
+  }
+
+  /**
+   * Handles the Enter key: opens the single result, the focused result, or the full search page.
+   * @param {KeyboardEvent} event - The keyboard event.
+   */
+  #handleEnterKey(event) {
+    const singleResultContainer = this.refs.predictiveSearchResults.querySelector('[data-single-result-url]');
+    if (singleResultContainer instanceof HTMLElement && singleResultContainer.dataset.singleResultUrl) {
+      event.preventDefault();
+      window.location.href = singleResultContainer.dataset.singleResultUrl;
+      return;
+    }
+
+    if (this.#currentIndex >= 0) {
+      event.preventDefault();
+      this.#currentItem?.querySelector('a')?.click();
+    } else {
+      const searchUrl = new URL(Theme.routes.search_url, location.origin);
+      searchUrl.searchParams.set('q', this.refs.searchInput.value);
+      window.location.href = searchUrl.toString();
+    }
+  }
 
   /**
    * Clears the recently viewed products.

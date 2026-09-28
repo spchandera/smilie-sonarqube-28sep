@@ -81,7 +81,7 @@ export class DialogComponent extends Component {
     dialog.style.animation = 'none';
 
     // Force a reflow
-    void dialog.offsetWidth;
+    dialog.getBoundingClientRect();
 
     // Now add the closing class and restore animation
     dialog.classList.add('dialog-closing');

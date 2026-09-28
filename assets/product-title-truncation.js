@@ -49,15 +49,15 @@ class ProductTitle extends Component {
     const containerHeight = this.clientHeight;
 
     const computedStyle = window.getComputedStyle(this);
-    const lineHeight = parseFloat(computedStyle.lineHeight);
-    const paddingTop = parseFloat(computedStyle.paddingTop);
-    const paddingBottom = parseFloat(computedStyle.paddingBottom);
+    const lineHeight = Number.parseFloat(computedStyle.lineHeight);
+    const paddingTop = Number.parseFloat(computedStyle.paddingTop);
+    const paddingBottom = Number.parseFloat(computedStyle.paddingBottom);
 
     const availableHeight = containerHeight - paddingTop - paddingBottom;
     const maxLines = Math.max(1, Math.floor(availableHeight / lineHeight));
 
     textElement.style.display = '-webkit-box';
-    textElement.style.webkitBoxOrient = 'vertical';
+    textElement.style.setProperty('-webkit-box-orient', 'vertical');
     textElement.style.overflow = 'hidden';
     textElement.style.textOverflow = 'ellipsis';
     textElement.style.webkitLineClamp = String(maxLines);

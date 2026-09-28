@@ -18,7 +18,7 @@ class RTEFormatter extends Component {
     wrapper.classList.add('rte-table-wrapper');
     const parent = table.parentNode;
     if (parent) {
-      parent.insertBefore(wrapper, table);
+      table.before(wrapper);
       wrapper.appendChild(table);
     }
   }

@@ -146,7 +146,7 @@ class MarqueeComponent extends Component {
    * @param {number} numberOfCopies
    */
   #calculateSpeed(numberOfCopies) {
-    const speedFactor = Number(this.getAttribute('data-speed-factor'));
+    const speedFactor = Number(this.dataset.speedFactor ?? 0);
     const speed = Math.sqrt(numberOfCopies) * speedFactor;
 
     return speed;

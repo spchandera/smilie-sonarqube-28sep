@@ -66,9 +66,6 @@
 .text-block>.metafield-rich_text_field p {
     margin: 0;
 }
-.product-information__grid .afterpay-main-text {
-
-}
 @media (max-width: 749px) {
     :root {
         --font-size--h1: clamp(2.50rem, 5.6vw, 3.5rem);

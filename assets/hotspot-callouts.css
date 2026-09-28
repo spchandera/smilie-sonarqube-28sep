@@ -77,9 +77,6 @@
   border-top: 1.3px solid currentColor;
   top: 62px;
 }
-.hotspot-callout__content-wrap {
-  padding-top: 81px;
-}
 .hotspot-callout--right .hotspot-callout__content-wrap {
   text-align: right;
 }
@@ -169,6 +166,7 @@ details.hotspot-callout--right[open] .hotspot-callout__content::after {
   animation: revealFromLeft 1.5s ease forwards;
 }
 .hotspot-callout__content-wrap {
+  padding-top: 81px;
   opacity: 0;
   transform: translateY(6px);
   transition: opacity 0.5s ease, transform 0.3s ease;

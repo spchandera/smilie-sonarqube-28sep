@@ -31,7 +31,7 @@ class JumboText extends Component {
     this.#intersectionObserver = new IntersectionObserver(
       (entries) => {
         // We observe a single element, so we only need the latest entry.
-        const entry = entries[entries.length - 1];
+        const entry = entries.at(-1);
 
         if (!entry) {
           return;
@@ -73,7 +73,7 @@ class JumboText extends Component {
       return;
     }
 
-    const currentFontSize = parseFloat(window.getComputedStyle(firstPassWidestChild).fontSize);
+    const currentFontSize = Number.parseFloat(window.getComputedStyle(firstPassWidestChild).fontSize);
     const firstPassFontSize = Math.round(((currentFontSize * containerWidth) / firstPassWidestChildWidth) * 100) / 100;
 
     // Disconnect the resize observer
@@ -170,7 +170,7 @@ class JumboText extends Component {
 
     // We assume that the component won't be at the bottom of the page unless it's inside the last section.
     const allSections = Array.from(document.querySelectorAll('.shopify-section'));
-    const lastSection = allSections[allSections.length - 1];
+    const lastSection = allSections.at(-1);
 
     if (lastSection && !lastSection.contains(this)) {
       return;

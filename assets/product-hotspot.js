@@ -133,7 +133,7 @@ export class ProductHotspotComponent extends Component {
     dialog.style.visibility = 'hidden';
     dialog.style.display = 'block';
     dialog.style.transform = 'none';
-    dialog.removeAttribute('data-placement');
+    delete dialog.dataset.placement;
 
     const { width: dialogWidth, height: dialogHeight } = dialog.getBoundingClientRect();
 
@@ -152,56 +152,27 @@ export class ProductHotspotComponent extends Component {
     const spaceLeft = buttonLeft - CONTAINER_GAP;
 
     // Determine horizontal placement
-    let x = 'right';
-
-    if (spaceRight >= dialogWidth + BUTTON_GAP) {
-      x = 'right';
-    } else if (spaceLeft >= dialogWidth + BUTTON_GAP) {
-      x = 'left';
-    } else {
-      x = 'center';
-    }
+    const x = this.#getHorizontalPlacement(spaceRight, spaceLeft, dialogWidth + BUTTON_GAP);
 
     // Determine vertical placement
-    let y = 'bottom';
+    let y;
     let verticalOffset = 0;
 
-    if (x !== 'center') {
-      let dialogStartY = buttonTop; // Default to top-aligned
-      let dialogEndY = buttonTop + dialogHeight;
-
-      if (dialogEndY > containerRect.height - CONTAINER_GAP) {
-        // If top-aligned overflows bottom
-        dialogStartY = buttonBottom - dialogHeight;
-        dialogEndY = buttonBottom;
-        y = 'top';
-
-        if (dialogStartY < CONTAINER_GAP) {
-          // If bottom-aligned overflows top
-          verticalOffset = CONTAINER_GAP - dialogStartY;
-        } else if (dialogEndY > containerRect.height - CONTAINER_GAP) {
-          // If bottom-aligned overflows bottom
-          verticalOffset = -(dialogEndY - (containerRect.height - CONTAINER_GAP));
-        }
-      } else {
-        if (dialogStartY < CONTAINER_GAP) {
-          // If top-aligned overflows top
-          if (dialogStartY < CONTAINER_GAP) {
-            verticalOffset = CONTAINER_GAP - dialogStartY;
-          }
-          y = 'bottom';
-        }
-      }
+    if (x === 'center') {
+      y = this.#getCenteredVerticalPlacement(
+        buttonTop,
+        buttonBottom,
+        dialogHeight + TOTAL_GAP,
+        containerRect.height
+      );
     } else {
-      // For center horizontal: position below or above button
-      if (containerRect.height - buttonBottom >= dialogHeight + TOTAL_GAP) {
-        y = 'bottom';
-      } else if (buttonTop >= dialogHeight + TOTAL_GAP) {
-        y = 'top';
-      } else {
-        // If neither fits well, choose based on button position
-        y = buttonTop < containerRect.height / 2 ? 'bottom' : 'top';
-      }
+      ({ y, verticalOffset } = this.#getSideVerticalPlacement(
+        buttonTop,
+        buttonBottom,
+        dialogHeight,
+        containerRect.height,
+        CONTAINER_GAP
+      ));
     }
 
     // Set placement data attribute
@@ -216,6 +187,70 @@ export class ProductHotspotComponent extends Component {
 
     // Return a promise that resolves after a few ticks to ensure styles are applied
     return new Promise((resolve) => setTimeout(resolve, 100));
+  }
+
+  /**
+   * Determine the horizontal placement of the dialog.
+   * @param {number} spaceRight - Available space to the right of the button.
+   * @param {number} spaceLeft - Available space to the left of the button.
+   * @param {number} requiredWidth - The width the dialog needs, including the button gap.
+   * @returns {'right' | 'left' | 'center'}
+   */
+  #getHorizontalPlacement(spaceRight, spaceLeft, requiredWidth) {
+    if (spaceRight >= requiredWidth) return 'right';
+    if (spaceLeft >= requiredWidth) return 'left';
+    return 'center';
+  }
+
+  /**
+   * Determine the vertical placement of a centred dialog: below or above the button.
+   * @param {number} buttonTop - The button top relative to the container.
+   * @param {number} buttonBottom - The button bottom relative to the container.
+   * @param {number} requiredHeight - The height the dialog needs, including gaps.
+   * @param {number} containerHeight - The container height.
+   * @returns {'bottom' | 'top'}
+   */
+  #getCenteredVerticalPlacement(buttonTop, buttonBottom, requiredHeight, containerHeight) {
+    if (containerHeight - buttonBottom >= requiredHeight) return 'bottom';
+    if (buttonTop >= requiredHeight) return 'top';
+
+    // If neither fits well, choose based on button position
+    return buttonTop < containerHeight / 2 ? 'bottom' : 'top';
+  }
+
+  /**
+   * Determine the vertical placement and offset of a dialog shown to the side of the button.
+   * @param {number} buttonTop - The button top relative to the container.
+   * @param {number} buttonBottom - The button bottom relative to the container.
+   * @param {number} dialogHeight - The dialog height.
+   * @param {number} containerHeight - The container height.
+   * @param {number} containerGap - The gap from the container edges.
+   * @returns {{y: 'bottom' | 'top', verticalOffset: number}}
+   */
+  #getSideVerticalPlacement(buttonTop, buttonBottom, dialogHeight, containerHeight, containerGap) {
+    const maxEndY = containerHeight - containerGap;
+
+    // Default to top-aligned
+    if (buttonTop + dialogHeight > maxEndY) {
+      // If top-aligned overflows bottom, bottom-align instead
+      const dialogStartY = buttonBottom - dialogHeight;
+      const dialogEndY = buttonBottom;
+      let verticalOffset = 0;
+
+      if (dialogStartY < containerGap) {
+        // If bottom-aligned overflows top
+        verticalOffset = containerGap - dialogStartY;
+      } else if (dialogEndY > maxEndY) {
+        // If bottom-aligned overflows bottom
+        verticalOffset = -(dialogEndY - maxEndY);
+      }
+
+      return { y: 'top', verticalOffset };
+    }
+
+    // If top-aligned overflows top
+    const verticalOffset = buttonTop < containerGap ? containerGap - buttonTop : 0;
+    return { y: 'bottom', verticalOffset };
   }
 
   /**

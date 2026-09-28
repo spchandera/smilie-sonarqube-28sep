@@ -282,13 +282,19 @@ export function removeWillChangeOnAnimationEnd(event) {
 }
 
 /**
+ * Default options passed to `Element.getAnimations` by `onAnimationEnd`.
+ * @type {GetAnimationsOptions}
+ */
+const DEFAULT_GET_ANIMATIONS_OPTIONS = Object.freeze({ subtree: true });
+
+/**
  * Wait for all animations to finish before calling the callback.
  * @param {Element | Element[]} elements The element(s) whose animations to wait for.
  * @param {() => void} [callback] The function to call when all animations are finished.
  * @param {Object} [options] The options to pass to `Element.getAnimations`.
  * @returns {Promise<void>} A promise that resolves when all animations are finished.
  */
-export function onAnimationEnd(elements, callback, options = { subtree: true }) {
+export function onAnimationEnd(elements, callback, options = DEFAULT_GET_ANIMATIONS_OPTIONS) {
   const animations = Array.isArray(elements)
     ? elements.flatMap((element) => element.getAnimations(options))
     : elements.getAnimations(options);
@@ -416,7 +422,7 @@ export function start(element, axis) {
 export function closest(values, target) {
   return values.reduce(function (prev, curr) {
     return Math.abs(curr - target) < Math.abs(prev - target) ? curr : prev;
-  });
+  }, values[0]);
 }
 
 /**
@@ -436,20 +442,21 @@ export function preventDefault(event) {
  * @param {'x' | 'y'} [axis] - Whether to only check along 'x' axis, 'y' axis, or both if undefined.
  * @returns {T[]} An array containing the visible elements.
  */
-export function getVisibleElements(root, elements, ratio = 1, axis) {
+export function getVisibleElements(root, elements, ratio, axis) {
   if (!elements?.length) return [];
+  const minRatio = ratio === undefined ? 1 : ratio;
   const rootRect = root.getBoundingClientRect();
 
   return elements.filter((element) => {
     const { width, height, top, right, left, bottom } = element.getBoundingClientRect();
 
-    if (ratio < 1) {
+    if (minRatio < 1) {
       const intersectionLeft = Math.max(rootRect.left, left);
       const intersectionRight = Math.min(rootRect.right, right);
       const intersectionWidth = Math.max(0, intersectionRight - intersectionLeft);
 
       if (axis === 'x') {
-        return width > 0 && intersectionWidth / width >= ratio;
+        return width > 0 && intersectionWidth / width >= minRatio;
       }
 
       const intersectionTop = Math.max(rootRect.top, top);
@@ -457,14 +464,14 @@ export function getVisibleElements(root, elements, ratio = 1, axis) {
       const intersectionHeight = Math.max(0, intersectionBottom - intersectionTop);
 
       if (axis === 'y') {
-        return height > 0 && intersectionHeight / height >= ratio;
+        return height > 0 && intersectionHeight / height >= minRatio;
       }
 
       const intersectionArea = intersectionWidth * intersectionHeight;
       const elementArea = width * height;
 
       // Check that at least the specified ratio of the element is visible
-      return elementArea > 0 && intersectionArea / elementArea >= ratio;
+      return elementArea > 0 && intersectionArea / elementArea >= minRatio;
     }
 
     const isWithinX = left >= rootRect.left && right <= rootRect.right;
@@ -487,14 +494,14 @@ export function getIOSVersion() {
 
   if (!isIOS) return null;
 
-  const version = userAgent.match(/OS ([\d_]+)/)?.[1];
+  const version = /OS ([\d_]+)/.exec(userAgent)?.[1];
   const [major, minor] = version?.split('_') || [];
   if (!version || !major) return null;
 
   return {
     fullString: version.replace('_', '.'),
-    major: parseInt(major, 10),
-    minor: minor ? parseInt(minor, 10) : 0,
+    major: Number.parseInt(major, 10),
+    minor: minor ? Number.parseInt(minor, 10) : 0,
   };
 }
 
@@ -528,18 +535,18 @@ function getCardsToAnimate(grid, cards) {
   const gridStyle = getComputedStyle(grid);
 
   const galleryAspectRatio = cardSample?.refs?.cardGallery?.style.getPropertyValue('--gallery-aspect-ratio') || '';
-  let aspectRatio = parseFloat(galleryAspectRatio) || 0.5;
+  let aspectRatio = Number.parseFloat(galleryAspectRatio) || 0.5;
   if (galleryAspectRatio?.includes('/')) {
     const [width = '1', height = '2'] = galleryAspectRatio.split('/');
-    aspectRatio = parseInt(width, 10) / parseInt(height, 10);
+    aspectRatio = Number.parseInt(width, 10) / Number.parseInt(height, 10);
   }
 
-  const cardGap = parseInt(cardSample?.refs?.productCardLink?.style.getPropertyValue('--product-card-gap') || '') || 12;
-  const gridGap = parseInt(gridStyle.getPropertyValue('--product-grid-gap')) || 12;
+  const cardGap = Number.parseInt(cardSample?.refs?.productCardLink?.style.getPropertyValue('--product-card-gap') || '') || 12;
+  const gridGap = Number.parseInt(gridStyle.getPropertyValue('--product-grid-gap')) || 12;
 
   // Assume only a couple of lines of text in the card details (title and price).
   // If the title wraps into more lines, we might just animate more cards, but that's fine.
-  const detailsSize = ((parseInt(gridStyle.fontSize) || 16) + 2) * 2;
+  const detailsSize = ((Number.parseInt(gridStyle.fontSize) || 16) + 2) * 2;
 
   const isMobile = window.innerWidth < 750;
 
@@ -617,8 +624,8 @@ export function parseIntOrDefault(value, defaultValue) {
   if (value === null || value === undefined || value === '') {
     return defaultValue;
   }
-  const parsed = parseInt(value.toString());
-  return isNaN(parsed) ? defaultValue : parsed;
+  const parsed = Number.parseInt(value.toString());
+  return Number.isNaN(parsed) ? defaultValue : parsed;
 }
 
 class Scheduler {
@@ -635,7 +642,7 @@ class Scheduler {
       this.#scheduled = true;
 
       // Wait for any in-progress view transitions to finish
-      if (viewTransition.current) await viewTransition.current;
+      if (viewTransition.current !== undefined) await viewTransition.current;
 
       requestAnimationFrame(this.flush);
     }
@@ -672,8 +679,6 @@ export function oncePerEditorSession(element, sessionKeyName, callback) {
   callback();
 
   if (isInThemeEditor) sessionStorage.setItem(uniqueSessionKey, 'true');
-
-  return;
 }
 
 /**
@@ -707,7 +712,7 @@ export function setHeaderMenuStyle() {
   if (headerComponent) {
     window.requestAnimationFrame(() => {
       const overflowList = headerComponent?.querySelector('overflow-list');
-      const hasReachedMinimum = overflowList && overflowList.hasAttribute('minimum-reached');
+      const hasReachedMinimum = overflowList?.hasAttribute('minimum-reached');
       headerComponent.dataset.menuStyle = isTouchDevice() || hasReachedMinimum ? 'drawer' : 'menu';
     });
   }
@@ -726,9 +731,7 @@ export function calculateHeaderGroupHeight(
   if (!headerGroup) return 0;
 
   let totalHeight = 0;
-  const children = headerGroup.children;
-  for (let i = 0; i < children.length; i++) {
-    const element = children[i];
+  for (const element of headerGroup.children) {
     if (element === header || !(element instanceof HTMLElement)) continue;
     totalHeight += element.offsetHeight;
   }

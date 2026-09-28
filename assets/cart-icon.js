@@ -17,7 +17,7 @@ class CartIcon extends Component {
 
   /** @type {number} */
   get currentCartCount() {
-    return parseInt(this.refs.cartBubbleCount.textContent ?? '0', 10);
+    return Number.parseInt(this.refs.cartBubbleCount.textContent ?? '0', 10);
   }
 
   set currentCartCount(value) {
@@ -117,7 +117,7 @@ class CartIcon extends Component {
 
       // Only update if timestamp is recent (within 10 seconds)
       if (Date.now() - timestamp < 10000) {
-        const count = parseInt(value, 10);
+        const count = Number.parseInt(value, 10);
 
         if (count >= 0) {
           this.renderCartBubble(count, false, false);

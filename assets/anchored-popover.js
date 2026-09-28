@@ -85,7 +85,7 @@ export class AnchoredPopoverComponent extends Component {
    */
   #resizeListener = debounce(() => {
     const popover = /** @type {HTMLElement} */ (this.refs.popover);
-    if (popover && popover.matches(':popover-open')) {
+    if (popover?.matches(':popover-open')) {
       popover.hidePopover();
     }
   }, 100);

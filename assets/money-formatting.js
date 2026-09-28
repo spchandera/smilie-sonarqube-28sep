@@ -74,14 +74,14 @@ export function convertMoneyToMinorUnits(value, currency) {
   const precision = CURRENCY_DECIMALS[currency.toUpperCase()] ?? DEFAULT_CURRENCY_DECIMALS;
   const multiplier = Math.pow(10, precision);
 
-  if (!value || !value.trim()) {
+  if (!value?.trim()) {
     return null;
   }
 
   // Split on non-digit characters to handle both . and , as decimal separators
   const parts = value
     .trim()
-    .split(/[^0-9]/)
+    .split(/\D/)
     .filter(Boolean);
 
   if (parts.length === 0) return null;
@@ -92,7 +92,7 @@ export function convertMoneyToMinorUnits(value, currency) {
   // Examples: "2,000,000.50" USD → ["2","000","000","50"] → last "50" (2 ≤ 2) = decimal
   //           "2,000,000" USD → ["2","000","000"] → last "000" (3 > 2) = thousands
   //           "9,500" KWD (3 dec) → ["9","500"] → last "500" (3 ≤ 3) = decimal
-  const lastPart = parts[parts.length - 1] ?? '';
+  const lastPart = parts.at(-1) ?? '';
   const lastPartIsDecimal = precision > 0 && parts.length > 1 && lastPart.length <= precision;
 
   let wholeStr, fractionStr;
@@ -107,18 +107,33 @@ export function convertMoneyToMinorUnits(value, currency) {
     fractionStr = '';
   }
 
-  const whole = parseInt(wholeStr, 10);
-  if (isNaN(whole)) return null;
+  const whole = Number.parseInt(wholeStr, 10);
+  if (Number.isNaN(whole)) return null;
 
   let fraction = 0;
 
   if (precision > 0 && fractionStr) {
     const fractionStrLength = fractionStr.length;
-    fraction = parseInt(fractionStr, 10) || 0;
+    fraction = Number.parseInt(fractionStr, 10) || 0;
     fraction = fraction * Math.pow(10, precision - fractionStrLength);
   }
 
   return whole * multiplier + fraction;
+}
+
+/**
+ * Inserts a separator between every group of 3 digits, counted from the right.
+ * @param {string} digits - A string made of digits only
+ * @param {string} separator - The thousands separator
+ * @returns {string} The grouped digits
+ */
+function groupDigits(digits, separator) {
+  let result = '';
+  for (let i = 0; i < digits.length; i++) {
+    if (i > 0 && (digits.length - i) % 3 === 0) result += separator;
+    result += digits[i];
+  }
+  return result;
 }
 
 /**
@@ -138,7 +153,7 @@ function formatCents(moneyValue, thousandsSeparator, decimalSeparator, precision
   if (!b) b = '';
 
   // Split by groups of 3 digits
-  a = a.replace(/\d(?=(\d\d\d)+(?!\d))/g, (digit) => digit + thousandsSeparator);
+  a = a.replace(/\d+/g, (digits) => groupDigits(digits, thousandsSeparator));
 
   return precision <= 0 ? a : a + decimalSeparator + b.padEnd(precision, '0');
 }
@@ -191,11 +206,9 @@ export function formatMoney(moneyValue, format, currency) {
       break;
     case 'amount_with_period_and_space_separator':
       thousandsSeparator = ' ';
-      decimalSeparator = '.';
       break;
     case 'amount_with_apostrophe_separator':
       thousandsSeparator = "'";
-      decimalSeparator = '.';
       break;
     default:
       break;

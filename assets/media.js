@@ -3,6 +3,17 @@ import { ThemeEvents, MediaStartedPlayingEvent } from '@theme/events';
 import { DialogCloseEvent } from '@theme/dialog';
 
 /**
+ * Gets the origin of an embedded player iframe, used as the postMessage target origin.
+ * @param {HTMLIFrameElement} iframe - The player iframe.
+ * @returns {string} The iframe origin.
+ */
+function getIframeOrigin(iframe) {
+  const { origin } = new URL(iframe.src, window.location.href);
+  // Opaque origins (e.g. about:blank) are serialised as 'null', which postMessage rejects
+  return origin === 'null' ? window.location.origin : origin;
+}
+
+/**
  * A deferred media element
  * @typedef {Object} Refs
  * @property {HTMLElement} deferredMediaPlayButton - The button to show the deferred media content
@@ -58,7 +69,7 @@ class DeferredMedia extends Component {
    * @param {boolean} [focus] - Whether to focus the content
    */
   loadContent(focus = true) {
-    if (this.getAttribute('data-media-loaded')) return;
+    if (this.dataset.mediaLoaded) return;
 
     this.dispatchEvent(new MediaStartedPlayingEvent(this));
 
@@ -66,7 +77,7 @@ class DeferredMedia extends Component {
 
     if (!content) return;
 
-    this.setAttribute('data-media-loaded', 'true');
+    this.dataset.mediaLoaded = 'true';
     this.appendChild(content);
 
     if (focus && content instanceof HTMLElement) {
@@ -100,7 +111,7 @@ class DeferredMedia extends Component {
         iframe.dataset.videoType === 'youtube'
           ? '{"event":"command","func":"playVideo","args":""}'
           : '{"method":"play"}',
-        '*'
+        getIframeOrigin(iframe)
       );
     } else {
       this.querySelector('video')?.play();
@@ -121,7 +132,7 @@ class DeferredMedia extends Component {
         iframe.dataset.videoType === 'youtube'
           ? '{"event":"command","func":"' + 'pauseVideo' + '","args":""}'
           : '{"method":"pause"}',
-        '*'
+        getIframeOrigin(iframe)
       );
     } else {
       this.querySelector('video')?.pause();
@@ -129,7 +140,7 @@ class DeferredMedia extends Component {
     this.isPlaying = false;
 
     // If we've already revealed the deferred media, we should toggle the play/pause hint
-    if (this.getAttribute('data-media-loaded')) {
+    if (this.dataset.mediaLoaded) {
       this.updatePlayPauseHint(this.isPlaying);
     }
   }
@@ -212,7 +223,7 @@ class ProductModel extends DeferredMedia {
       (/** @type {PointerEvent} */ event) => {
         const distanceX = Math.abs(event.clientX - pointerStartX);
         const distanceY = Math.abs(event.clientY - pointerStartY);
-        const totalDistance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+        const totalDistance = Math.hypot(distanceX, distanceY);
 
         // Try to ensure that this is a tap, not a drag.
         if (totalDistance < 10) {

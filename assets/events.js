@@ -285,6 +285,6 @@ export class FilterUpdateEvent extends Event {
   }
 
   shouldShowClearAll() {
-    return [...this.detail.queryParams.entries()].filter(([key]) => key.startsWith('filter.')).length > 0;
+    return [...this.detail.queryParams.entries()].some(([key]) => key.startsWith('filter.'));
   }
 }

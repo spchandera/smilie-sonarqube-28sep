@@ -176,8 +176,6 @@ class StickyAddToCartComponent extends Component {
     if (this.#resetTimeout) clearTimeout(this.#resetTimeout);
 
     const flyToCartElement = /** @type {FlyToCart} */ (document.createElement('fly-to-cart'));
-    const sourceStyles = getComputedStyle(this.refs.productImage);
-
     flyToCartElement.classList.add('fly-to-cart--sticky');
     flyToCartElement.style.setProperty('background-image', `url(${this.refs.productImage.src})`);
     flyToCartElement.useSourceSize = 'true';
@@ -188,7 +186,7 @@ class StickyAddToCartComponent extends Component {
 
     await onAnimationEnd([this.refs.addToCartButton, flyToCartElement]);
     this.#resetTimeout = setTimeout(() => {
-      this.refs.addToCartButton.removeAttribute('data-added');
+      delete this.refs.addToCartButton.dataset.added;
     }, 800);
   };
 
@@ -209,18 +207,18 @@ class StickyAddToCartComponent extends Component {
     if (!newStickyBar) return;
 
     // Store current visibility state before morphing
-    const currentStuck = this.refs.stickyBar.getAttribute('data-stuck') || 'false';
+    const currentStuck = this.refs.stickyBar.dataset.stuck || 'false';
     const variantAvailable = newStickyAddToCart.dataset.variantAvailable;
 
     // Morph the entire sticky bar content
     morph(this.refs.stickyBar, newStickyBar, { childrenOnly: true });
 
     // Restore visibility state after morphing
-    this.refs.stickyBar.setAttribute('data-stuck', currentStuck);
+    this.refs.stickyBar.dataset.stuck = currentStuck;
     this.dataset.variantAvailable = variantAvailable;
 
     // Update the dataset attributes with new variant info
-    if (variant && variant.id) {
+    if (variant?.id) {
       this.dataset.currentVariantId = variant.id;
     }
 
@@ -330,7 +328,7 @@ class StickyAddToCartComponent extends Component {
    * Gets the initial quantity from the data attribute
    */
   #getInitialQuantity() {
-    this.#currentQuantity = parseInt(this.dataset.initialQuantity || '1') || 1;
+    this.#currentQuantity = Number.parseInt(this.dataset.initialQuantity || '1') || 1;
     this.#updateButtonText();
   }
 

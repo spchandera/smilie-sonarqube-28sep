@@ -31,7 +31,7 @@ export function trapFocus(container) {
   }
 
   const first = focusable[0];
-  const last = focusable[focusable.length - 1];
+  const last = focusable.at(-1);
 
   // Keydown handler for cycling focus with Tab and Shift+Tab
   /** @type {(event: KeyboardEvent) => void} */

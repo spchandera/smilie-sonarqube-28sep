@@ -36,6 +36,7 @@
   }
   .split-slideshow-section .layout-panel-flex--row:not(.mobile-column) {
     justify-content: center;
+    padding-bottom: 24px;
   }
   .split-slideshow-section .group-block-content .button {
     padding-inline: 37.02px;
@@ -50,9 +51,6 @@
   .split-slideshow-section .group-block-content.mobile-column {
     justify-content: flex-end;
     align-items: center;
-  }
-  .split-slideshow-section .layout-panel-flex--row:not(.mobile-column) {
-    padding-bottom: 24px;
   }
   .split-slideshow-section .text-block[style*="--font-size: 0.875rem;"] p {
     font-size: 12px;

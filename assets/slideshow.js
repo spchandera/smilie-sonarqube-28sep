@@ -111,7 +111,7 @@ export class Slideshow extends Component {
       queueMicrotask(() => {
         // Only select if the component is connected and initialized
         if (!this.isConnected || !this.#scroll || !this.refs.slides) return;
-        const index = parseInt(newValue, 10) || 0;
+        const index = Number.parseInt(newValue, 10) || 0;
         const slide_id = this.refs.slides[index]?.getAttribute('slide-id');
         if (slide_id) {
           this.select({ id: slide_id }, undefined, { animate: false });
@@ -193,37 +193,16 @@ export class Slideshow extends Component {
     // Store the actual current slide before any mutations
     const currentSlide = this.slides?.[this.current];
 
-    for (const slide of this.refs.slides) {
-      if (slide.hasAttribute('reveal')) {
-        slide.removeAttribute('reveal');
-        slide.setAttribute('aria-hidden', 'true');
-      }
-    }
+    this.#clearRevealedSlides(this.refs.slides);
 
     // Figure out the raw desired index (could be -1 if user is on first slide and clicks prev)
-    let requestedIndex = (() => {
-      if (typeof input === 'number') return input;
-      if (typeof input === 'string') return parseInt(input, 10);
-      if ('id' in input) {
-        const requestedSlide = this.refs.slides.find((slide) => slide.getAttribute('slide-id') == input.id);
-
-        if (!requestedSlide || !this.slides) return;
-
-        // Force the slide to be revealed if it is hidden
-        if (requestedSlide.hasAttribute('hidden')) {
-          requestedSlide.setAttribute('reveal', '');
-          requestedSlide.setAttribute('aria-hidden', 'false');
-        }
-
-        return this.slides.indexOf(requestedSlide);
-      }
-    })();
+    let requestedIndex = this.#resolveRequestedIndex(input);
 
     const { current } = this;
     const { slides } = this;
 
     // Guard checks: no slides, invalid index, or selecting the same slide
-    if (!slides?.length || requestedIndex === undefined || isNaN(requestedIndex)) return;
+    if (!slides?.length || requestedIndex === undefined || Number.isNaN(requestedIndex)) return;
 
     const requestedSlideElement = slides?.[requestedIndex];
     if (currentSlide === requestedSlideElement) return;
@@ -236,9 +215,7 @@ export class Slideshow extends Component {
     const lastIndex = slides.length - 1;
 
     // Decide the actual target index (clamp for infinite loop)
-    let index = requestedIndex;
-    if (requestedIndex < 0) index = lastIndex;
-    else if (requestedIndex > lastIndex) index = 0;
+    const index = this.#resolveTargetIndex(requestedIndex, lastIndex);
 
     const isAdjacentSlide = Math.abs(index - current) <= 1 && requestedIndex >= 0 && requestedIndex <= lastIndex;
     const { visibleSlides } = this;
@@ -252,41 +229,112 @@ export class Slideshow extends Component {
       const targetSlide = slides[index];
       if (!targetSlide || !currentSlide) return;
 
-      // Create a placeholder in the original DOM position of targetSlide
-      const placeholder = document.createElement('slideshow-slide');
-      targetSlide.before(placeholder);
-
-      // Decide whether targetSlide goes before or after currentSlide
-      // so that we scroll a short distance in the correct direction
-      if (requestedIndex < current) {
-        currentSlide.before(targetSlide);
-      } else {
-        currentSlide.after(targetSlide);
-      }
-
-      if (current === 0) this.#scroll.to(currentSlide, { instant: true });
-
-      // Once that scroll finishes, restore the DOM
-      queueMicrotask(async () => {
-        await this.#scroll.finished;
-        this.#disabled = false;
-
-        // Restore the slide back to its original position. This triggers a scroll event.
-        placeholder.replaceWith(targetSlide);
-
-        // Instantly scroll to the target slide as its position will have changed
-        this.#scroll.to(targetSlide, { instant: true });
-
-        // Force Safari to recalculate the timeline state on timeline refresh (after loop)
-        requestAnimationFrame(() => {
-          this.setAttribute('refreshing-timeline', '');
-          requestAnimationFrame(() => {
-            this.removeAttribute('refreshing-timeline');
-          });
-        });
-      });
+      this.#reorderForLoop(targetSlide, currentSlide, requestedIndex, current);
     }
 
+    this.#completeSelect(slides, index, instant, event);
+  }
+
+  /**
+   * Hides any slides that were previously force-revealed.
+   * @param {HTMLElement[]} slideElements - The slides to reset.
+   */
+  #clearRevealedSlides(slideElements) {
+    for (const slide of slideElements) {
+      if (slide.hasAttribute('reveal')) {
+        slide.removeAttribute('reveal');
+        slide.setAttribute('aria-hidden', 'true');
+      }
+    }
+  }
+
+  /**
+   * Resolves the raw requested index from a select() input.
+   * @param {number|string|{id: string}} input - The index or id of the slide to select.
+   * @returns {number|undefined} The requested index, or undefined if it cannot be resolved.
+   */
+  #resolveRequestedIndex(input) {
+    if (typeof input === 'number') return input;
+    if (typeof input === 'string') return Number.parseInt(input, 10);
+    if ('id' in input) {
+      const requestedSlide = this.refs.slides.find((slide) => slide.getAttribute('slide-id') == input.id);
+
+      if (!requestedSlide || !this.slides) return;
+
+      // Force the slide to be revealed if it is hidden
+      if (requestedSlide.hasAttribute('hidden')) {
+        requestedSlide.setAttribute('reveal', '');
+        requestedSlide.setAttribute('aria-hidden', 'false');
+      }
+
+      return this.slides.indexOf(requestedSlide);
+    }
+  }
+
+  /**
+   * Wraps the requested index around the ends of the slideshow.
+   * @param {number} requestedIndex - The requested index.
+   * @param {number} lastIndex - The index of the last slide.
+   * @returns {number} The target index.
+   */
+  #resolveTargetIndex(requestedIndex, lastIndex) {
+    if (requestedIndex < 0) return lastIndex;
+    if (requestedIndex > lastIndex) return 0;
+    return requestedIndex;
+  }
+
+  /**
+   * Temporarily moves the target slide next to the current slide so that a long jump
+   * (or a loop) scrolls a short distance, then restores the DOM once scrolling finishes.
+   * @param {HTMLElement} targetSlide - The slide being selected.
+   * @param {HTMLElement} currentSlide - The currently selected slide.
+   * @param {number} requestedIndex - The raw requested index.
+   * @param {number} current - The current slide index.
+   */
+  #reorderForLoop(targetSlide, currentSlide, requestedIndex, current) {
+    // Create a placeholder in the original DOM position of targetSlide
+    const placeholder = document.createElement('slideshow-slide');
+    targetSlide.before(placeholder);
+
+    // Decide whether targetSlide goes before or after currentSlide
+    // so that we scroll a short distance in the correct direction
+    if (requestedIndex < current) {
+      currentSlide.before(targetSlide);
+    } else {
+      currentSlide.after(targetSlide);
+    }
+
+    if (current === 0) this.#scroll.to(currentSlide, { instant: true });
+
+    // Once that scroll finishes, restore the DOM
+    queueMicrotask(async () => {
+      await this.#scroll.finished;
+      this.#disabled = false;
+
+      // Restore the slide back to its original position. This triggers a scroll event.
+      placeholder.replaceWith(targetSlide);
+
+      // Instantly scroll to the target slide as its position will have changed
+      this.#scroll.to(targetSlide, { instant: true });
+
+      // Force Safari to recalculate the timeline state on timeline refresh (after loop)
+      requestAnimationFrame(() => {
+        this.setAttribute('refreshing-timeline', '');
+        requestAnimationFrame(() => {
+          this.removeAttribute('refreshing-timeline');
+        });
+      });
+    });
+  }
+
+  /**
+   * Scrolls to the selected slide, updates the current index and dispatches the select event.
+   * @param {HTMLElement[]} slides - The visible slides.
+   * @param {number} index - The target index.
+   * @param {boolean} instant - Whether to scroll instantly.
+   * @param {Event} [event] - The event that triggered the selection.
+   */
+  #completeSelect(slides, index, instant, event) {
     const slide = slides[index];
     if (!slide) return;
 
@@ -396,7 +444,7 @@ export class Slideshow extends Component {
 
   get autoplayInterval() {
     const interval = this.getAttribute('autoplay');
-    const value = parseInt(`${interval}`, 10);
+    const value = Number.parseInt(`${interval}`, 10);
 
     if (Number.isNaN(value)) return undefined;
 
@@ -442,14 +490,14 @@ export class Slideshow extends Component {
 
   get previousIndex() {
     const { current, visibleSlides } = this;
-    const modifier = visibleSlides.length > 1 ? visibleSlides.length : 1;
+    const modifier = Math.max(visibleSlides.length, 1);
 
     return current - modifier;
   }
 
   get nextIndex() {
     const { current, visibleSlides } = this;
-    const modifier = visibleSlides.length > 1 ? visibleSlides.length : 1;
+    const modifier = Math.max(visibleSlides.length, 1);
 
     return current + modifier;
   }
@@ -642,9 +690,15 @@ export class Slideshow extends Component {
    */
   #sync = () => {
     const { slides } = this;
-    if (!slides) return (this.current = 0);
+    if (!slides) {
+      this.current = 0;
+      return 0;
+    }
 
-    if (!this.#scroll) return (this.current = 0);
+    if (!this.#scroll) {
+      this.current = 0;
+      return 0;
+    }
 
     const visibleSlides = this.visibleSlides;
 
@@ -657,11 +711,15 @@ export class Slideshow extends Component {
     const closestCenter = closest(centers, referencePoint);
     const closestVisibleSlide = visibleSlides[centers.indexOf(closestCenter)];
 
-    if (!closestVisibleSlide) return (this.current = 0);
+    if (!closestVisibleSlide) {
+      this.current = 0;
+      return 0;
+    }
 
     const index = slides.indexOf(closestVisibleSlide);
 
-    return (this.current = index);
+    this.current = index;
+    return index;
   };
 
   #dragging = false;
@@ -828,7 +886,7 @@ export class Slideshow extends Component {
     const initialSlide = this.getAttribute('initial-slide');
     if (initialSlide == null) return 0;
 
-    return parseInt(initialSlide, 10);
+    return Number.parseInt(initialSlide, 10);
   }
 
   /**
@@ -921,7 +979,7 @@ export class Slideshow extends Component {
 
   #updateVisibleSlides() {
     const { slides } = this;
-    if (!slides || !slides.length) return 0;
+    if (!slides?.length) return 0;
 
     const visibleSlides = this.visibleSlides;
 

@@ -46,9 +46,9 @@ class QuickOrderListComponent extends Component {
    * @returns {number}
    */
   get currentPage() {
-    if (this.refs.paginationNav && this.refs.paginationNav.dataset.current_page) {
-      const pageNum = parseInt(this.refs.paginationNav.dataset.current_page, 10);
-      if (!isNaN(pageNum)) {
+    if (this.refs.paginationNav?.dataset.current_page) {
+      const pageNum = Number.parseInt(this.refs.paginationNav.dataset.current_page, 10);
+      if (!Number.isNaN(pageNum)) {
         return pageNum;
       }
     }
@@ -274,6 +274,18 @@ class QuickOrderListComponent extends Component {
   }
 
   /**
+   * Gets the current cart quantity stored on a variant row's quantity input
+   * @param {HTMLElement} variantRow - The variant row element
+   * @returns {number}
+   */
+  #getRowCartQuantity(variantRow) {
+    const quantityInput = /** @type {HTMLInputElement|null} */ (variantRow.querySelector('input[data-cart-quantity]'));
+    if (!quantityInput) return 0;
+
+    return Number.parseInt(quantityInput.dataset.cartQuantity || '0') || 0;
+  }
+
+  /**
    * Handles quantity selector updates
    * @param {CustomEvent} event - The quantity update event
    */
@@ -296,8 +308,7 @@ class QuickOrderListComponent extends Component {
     const variantId = variantRow.dataset.variantId;
     if (!variantId) return;
 
-    const quantityInput = /** @type {HTMLInputElement|null} */ (variantRow.querySelector('input[data-cart-quantity]'));
-    const currentCartQuantity = quantityInput ? parseInt(quantityInput.dataset.cartQuantity || '0') || 0 : 0;
+    const currentCartQuantity = this.#getRowCartQuantity(variantRow);
 
     this.#clearSuccessMessage();
     this.#clearErrorMessage();

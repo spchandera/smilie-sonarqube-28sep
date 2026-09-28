@@ -1,5 +1,5 @@
 import { Component } from '@theme/component';
-import { ThemeEvents, CartErrorEvent, CartAddEvent } from '@theme/events';
+import { ThemeEvents, CartErrorEvent } from '@theme/events';
 
 /**
  * @typedef {Object} GiftCardRecipientFormRefs
@@ -274,7 +274,7 @@ class GiftCardRecipientForm extends Component {
     const currentLength = this.refs.recipientMessage.value.length;
     const maxLength = this.refs.recipientMessage.maxLength;
 
-    const template = this.refs.characterCount.getAttribute('data-template');
+    const template = this.refs.characterCount.dataset.template;
     if (!template) return;
 
     const updatedText = template.replace('[current]', currentLength.toString()).replace('[max]', maxLength.toString());
@@ -345,26 +345,7 @@ class GiftCardRecipientForm extends Component {
         const fieldConfig = fieldMap[field];
         if (!fieldConfig) continue;
 
-        const { inputRef, errorRef } = fieldConfig;
-        const errorContainer = this.refs[errorRef];
-        const inputElement = this.refs[inputRef];
-
-        if (errorContainer && errorContainer instanceof HTMLElement) {
-          const errorTextElement = errorContainer.querySelector('span');
-          if (errorTextElement) {
-            const message = Array.isArray(errorMessages) ? errorMessages.join(', ') : errorMessages;
-            errorTextElement.textContent = `${message}.`;
-          }
-
-          errorContainer.classList.remove('hidden');
-        }
-
-        if (inputElement && inputElement instanceof HTMLElement) {
-          // Set ARIA attributes for accessibility
-          inputElement.setAttribute('aria-invalid', 'true');
-          const errorId = `RecipientForm-${field}-error-${this.dataset.sectionId || 'default'}`;
-          inputElement.setAttribute('aria-describedby', errorId);
-        }
+        this.#displayFieldError(field, errorMessages, fieldConfig);
       }
     }
 
@@ -372,6 +353,35 @@ class GiftCardRecipientForm extends Component {
     if (this.refs.liveRegion) {
       this.refs.liveRegion.textContent =
         title || Theme.translations?.recipient_form_error || 'There was an error with the form submission';
+    }
+  }
+
+  /**
+   * Display the error message for a single field and flag its input as invalid
+   * @param {string} field - The field name from the error response
+   * @param {*} errorMessages - The error message(s) for the field
+   * @param {{inputRef: string, errorRef: string}} fieldConfig - The refs for the field's input and error container
+   */
+  #displayFieldError(field, errorMessages, fieldConfig) {
+    const { inputRef, errorRef } = fieldConfig;
+    const errorContainer = this.refs[errorRef];
+    const inputElement = this.refs[inputRef];
+
+    if (errorContainer && errorContainer instanceof HTMLElement) {
+      const errorTextElement = errorContainer.querySelector('span');
+      if (errorTextElement) {
+        const message = Array.isArray(errorMessages) ? errorMessages.join(', ') : errorMessages;
+        errorTextElement.textContent = `${message}.`;
+      }
+
+      errorContainer.classList.remove('hidden');
+    }
+
+    if (inputElement && inputElement instanceof HTMLElement) {
+      // Set ARIA attributes for accessibility
+      inputElement.setAttribute('aria-invalid', 'true');
+      const errorId = `RecipientForm-${field}-error-${this.dataset.sectionId || 'default'}`;
+      inputElement.setAttribute('aria-describedby', errorId);
     }
   }
 

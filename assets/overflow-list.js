@@ -94,7 +94,7 @@ export class OverflowList extends DeclarativeShadowElement {
       !(list instanceof HTMLUListElement) ||
       !(placeholder instanceof HTMLLIElement)
     ) {
-      throw new Error('Invalid element types in <OverflowList />');
+      throw new TypeError('Invalid element types in <OverflowList />');
     }
 
     this.#refs = {
@@ -119,7 +119,7 @@ export class OverflowList extends DeclarativeShadowElement {
     // Instead, we ignore it for now and remove it later on the first reflow.
     const elements = defaultSlot.assignedElements().filter((element) => !(element instanceof HTMLTemplateElement));
     const firstElement = elements[0];
-    const lastElement = elements[elements.length - 1];
+    const lastElement = elements.at(-1);
 
     // Observe the first and last elements to trigger a reflow when they are visible.
     // That way we can get their height from the IntersectionObserver for free (without reflows).
@@ -152,7 +152,7 @@ export class OverflowList extends DeclarativeShadowElement {
    */
   get minimumItems() {
     const value = this.getAttribute('minimum-items');
-    return value ? parseInt(value, 10) : null;
+    return value ? Number.parseInt(value, 10) : null;
   }
 
   get overflowSlot() {
@@ -265,7 +265,7 @@ export class OverflowList extends DeclarativeShadowElement {
     this.#moveItemsToDefaultSlot();
 
     const elements = defaultSlot.assignedElements();
-    const lastElement = elements[elements.length - 1];
+    const lastElement = elements.at(-1);
 
     if (!lastElement) {
       this.#observeChanges();

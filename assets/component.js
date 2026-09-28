@@ -214,8 +214,8 @@ function registerEventListeners() {
   initialized = true;
 
   const events = ['click', 'change', 'select', 'focus', 'blur', 'submit', 'input', 'keydown', 'keyup', 'toggle'];
-  const shouldBubble = ['focus', 'blur'];
-  const expensiveEvents = ['pointerenter', 'pointerleave'];
+  const shouldBubble = new Set(['focus', 'blur']);
+  const expensiveEvents = new Set(['pointerenter', 'pointerleave']);
 
   for (const eventName of [...events, ...expensiveEvents]) {
     const attribute = `on:${eventName}`;
@@ -248,13 +248,9 @@ function registerEventListeners() {
         let [selector, method] = value.split('/');
         // Extract the last segment of the attribute value delimited by `?` or `/`
         // Do not use lookback for Safari 16.0 compatibility
-        const matches = value.match(/([\/\?][^\/\?]+)([\/\?][^\/\?]+)$/);
+        const matches = /([/?][^/?]+)([/?][^/?]+)$/.exec(value);
         const data = matches ? matches[2] : null;
-        const instance = selector
-          ? selector.startsWith('#')
-            ? document.querySelector(selector)
-            : element.closest(selector)
-          : getClosestComponent(element);
+        const instance = getTargetInstance(element, selector);
 
         if (!(instance instanceof Component) || !method) return;
 
@@ -289,12 +285,29 @@ function registerEventListeners() {
       return target;
     }
 
-    if (expensiveEvents.includes(event.type)) {
+    if (expensiveEvents.has(event.type)) {
       return null;
     }
 
-    return event.bubbles || shouldBubble.includes(event.type) ? target.closest(`[on\\:${event.type}]`) : null;
+    return event.bubbles || shouldBubble.has(event.type) ? target.closest(String.raw`[on\:${event.type}]`) : null;
   }
+}
+
+/**
+ * Resolves the element that should handle a declarative event.
+ * A selector starting with `#` is looked up in the document, any other selector
+ * is matched against the element's ancestors, and no selector falls back to the closest component.
+ *
+ * @param {Element} element - The element the event was triggered on.
+ * @param {string} selector - The selector part of the `on:{event}` attribute value.
+ * @returns {Element | null | undefined} The resolved element.
+ */
+function getTargetInstance(element, selector) {
+  if (!selector) return getClosestComponent(element);
+
+  if (selector.startsWith('#')) return document.querySelector(selector);
+
+  return element.closest(selector);
 }
 
 /**
@@ -329,7 +342,7 @@ function parseValue(str) {
   if (str === 'false') return false;
 
   const maybeNumber = Number(str);
-  if (!isNaN(maybeNumber) && str.trim() !== '') return maybeNumber;
+  if (!Number.isNaN(maybeNumber) && str.trim() !== '') return maybeNumber;
 
   return str;
 }

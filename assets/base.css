@@ -149,9 +149,6 @@ select {
 
 .product-card__content {
   position: relative;
-}
-
-.product-card__content {
   cursor: pointer;
 }
 
@@ -203,8 +200,9 @@ h6 {
 }
 
 .wrap-text {
-  overflow-wrap: break-word;
-  word-break: break-word;
+  /* Equivalent to the deprecated `word-break: break-word` */
+  overflow-wrap: anywhere;
+  word-break: normal;
   hyphens: auto;
 }
 
@@ -536,11 +534,6 @@ p:empty {
 
 .contents {
   display: contents;
-}
-
-.flex {
-  display: flex;
-  gap: var(--gap-md);
 }
 
 .grid {
@@ -1318,12 +1311,6 @@ button.shopify-payment-button__button--unbranded {
   outline-color: var(--button-background-color);
 }
 
-.button-secondary {
-  font-family: var(--button-font-family-secondary);
-  text-transform: var(--button-text-case-secondary);
-  border-radius: var(--style-border-radius-buttons-secondary);
-}
-
 button.shopify-payment-button__button--unbranded {
   font-family: var(--button-font-family-primary);
   text-transform: var(--button-text-case-primary);
@@ -1373,6 +1360,9 @@ button.shopify-payment-button__button--unbranded:hover:not([disabled]) {
 }
 
 .button-secondary {
+  font-family: var(--button-font-family-secondary);
+  text-transform: var(--button-text-case-secondary);
+  border-radius: var(--style-border-radius-buttons-secondary);
   --button-color: var(--color-secondary-button-text);
   --button-background-color: var(--color-secondary-button-background);
   --button-border-color: var(--color-secondary-button-border);
@@ -3114,7 +3104,8 @@ label:has(input[type='checkbox']:disabled) {
   margin: 0;
   text-align: center;
   border: none;
-  appearance: none;
+  /* Firefox: hide the number spinner */
+  appearance: textfield;
   max-width: calc(var(--quantity-selector-width) - var(--minimum-touch-target) * 2);
   border-radius: var(--style-border-radius-buttons);
   color: var(--color-input-text);
@@ -3125,11 +3116,6 @@ label:has(input[type='checkbox']:disabled) {
 .quantity-selector input[type='number']::-webkit-inner-spin-button,
 .quantity-selector input[type='number']::-webkit-outer-spin-button {
   appearance: none;
-}
-
-/* Firefox */
-.quantity-selector input[type='number'] {
-  appearance: textfield;
 }
 
 /* Pills (used in facets and predictive search) */
@@ -4085,6 +4071,8 @@ product-recommendations:has([data-has-recommendations='false']) {
   animation-fill-mode: forwards;
   transition: width var(--animation-speed) var(--animation-easing),
     opacity var(--animation-speed) var(--animation-easing);
+  /* stylelint-disable-next-line plugin/no-unsupported-browser-features */
+  clip-path: circle(100% at 50% 50%);
 }
 
 .add-to-cart__added {
@@ -4212,11 +4200,6 @@ product-recommendations:has([data-has-recommendations='false']) {
     transition-duration: calc((var(--text-speed) * 0.6s)), calc((var(--text-speed) * 1s));
     transition-timing-function: ease-out;
   }
-}
-
-.add-to-cart-text {
-  /* stylelint-disable-next-line plugin/no-unsupported-browser-features */
-  clip-path: circle(100% at 50% 50%);
 }
 
 @keyframes atc-slide {

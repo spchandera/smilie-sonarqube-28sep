@@ -239,7 +239,7 @@ class PriceFacetComponent extends Component {
    * @returns {string} Just the placeholder (e.g., "{{amount}}")
    */
   #extractMoneyPlaceholder(format) {
-    const match = format.match(/{{\s*\w+\s*}}/);
+    const match = /{{\s*\w+\s*}}/.exec(format);
     return match ? match[0] : '{{amount}}';
   }
 
@@ -250,8 +250,8 @@ class PriceFacetComponent extends Component {
   #onKeyDown = (event) => {
     if (event.metaKey) return;
 
-    const pattern = /[0-9]|\.|,|'| |Tab|Backspace|Enter|ArrowUp|ArrowDown|ArrowLeft|ArrowRight|Delete|Escape/;
-    if (!event.key.match(pattern)) event.preventDefault();
+    const pattern = /\d|\.|,|'| |Tab|Backspace|Enter|ArrowUp|ArrowDown|ArrowLeft|ArrowRight|Delete|Escape/;
+    if (!pattern.exec(event.key)) event.preventDefault();
   };
 
   /**
@@ -294,8 +294,8 @@ class PriceFacetComponent extends Component {
     const value = this.#parseDisplayValue(input.value, currency);
 
     // data-min and data-max now contain raw minor unit values (not formatted)
-    const min = this.#parseDisplayValue(input.getAttribute('data-min') ?? '0', currency);
-    const max = this.#parseDisplayValue(input.getAttribute('data-max') ?? '0', currency);
+    const min = this.#parseDisplayValue(input.dataset.min ?? '0', currency);
+    const max = this.#parseDisplayValue(input.dataset.max ?? '0', currency);
 
     if (value < min) {
       input.value = formatMoney(min, moneyFormat, currency);
@@ -310,10 +310,10 @@ class PriceFacetComponent extends Component {
   #setMinAndMaxValues() {
     const { minInput, maxInput } = this.refs;
 
-    if (maxInput.value) minInput.setAttribute('data-max', maxInput.value);
-    if (minInput.value) maxInput.setAttribute('data-min', minInput.value);
-    if (minInput.value === '') maxInput.setAttribute('data-min', '0');
-    if (maxInput.value === '') minInput.setAttribute('data-max', maxInput.getAttribute('data-max') ?? '');
+    if (maxInput.value) minInput.dataset.max = maxInput.value;
+    if (minInput.value) maxInput.dataset.min = minInput.value;
+    if (minInput.value === '') maxInput.dataset.min = '0';
+    if (maxInput.value === '') minInput.dataset.max = maxInput.dataset.max ?? '';
   }
 
   /**
@@ -636,42 +636,40 @@ class SortingFilterComponent extends Component {
 
     // Because we have a select element on mobile and a bunch of radio buttons on desktop,
     // we need to disable the input during "form-submission" to prevent duplicate entries.
-    if (shouldDisable) {
-      if (isMobile) {
-        const inputs = this.querySelectorAll('input[name="sort_by"]');
-        inputs.forEach((input) => {
-          if (!(input instanceof HTMLInputElement)) return;
-          input.disabled = true;
-        });
-      } else {
-        const selectElement = this.querySelector('select[name="sort_by"]');
-        if (!(selectElement instanceof HTMLSelectElement)) return;
-        selectElement.disabled = true;
-      }
-    }
+    if (shouldDisable && !this.#setSortInputsDisabled(isMobile, true)) return;
 
     facetsForm.updateFilters();
     this.updateFacetStatus(event);
 
     // Re-enable the input after the form-submission
-    if (shouldDisable) {
-      if (isMobile) {
-        const inputs = this.querySelectorAll('input[name="sort_by"]');
-        inputs.forEach((input) => {
-          if (!(input instanceof HTMLInputElement)) return;
-          input.disabled = false;
-        });
-      } else {
-        const selectElement = this.querySelector('select[name="sort_by"]');
-        if (!(selectElement instanceof HTMLSelectElement)) return;
-        selectElement.disabled = false;
-      }
-    }
+    if (shouldDisable && !this.#setSortInputsDisabled(isMobile, false)) return;
 
     // Close the details element when a value is selected
     const { details } = this.refs;
     if (!(details instanceof HTMLDetailsElement)) return;
     details.open = false;
+  }
+
+  /**
+   * Toggles the disabled state of the sort inputs (radio buttons on mobile, select on desktop)
+   * @param {boolean} isMobile - Whether the mobile layout is active
+   * @param {boolean} disabled - The disabled state to apply
+   * @returns {boolean} False if the desktop select element could not be found
+   */
+  #setSortInputsDisabled(isMobile, disabled) {
+    if (isMobile) {
+      const inputs = this.querySelectorAll('input[name="sort_by"]');
+      inputs.forEach((input) => {
+        if (!(input instanceof HTMLInputElement)) return;
+        input.disabled = disabled;
+      });
+      return true;
+    }
+
+    const selectElement = this.querySelector('select[name="sort_by"]');
+    if (!(selectElement instanceof HTMLSelectElement)) return false;
+    selectElement.disabled = disabled;
+    return true;
   }
 
   /**
@@ -813,7 +811,7 @@ class FacetStatusComponent extends Component {
 
     // Last resort: clean and parse as integer
     const cleanFallback = fallback.replace(/[^\d]/g, '');
-    return parseInt(cleanFallback, 10) || 0;
+    return Number.parseInt(cleanFallback, 10) || 0;
   }
 
   /**
