@@ -161,6 +161,84 @@ export function fetchConfig(type = 'json', config = {}) {
 }
 
 /**
+ * Adds interval-based autoplay to a slideshow-style custom element.
+ * The element's `autoplay` attribute sets the interval in seconds, and the class must implement `next()`.
+ * Playback holds while the element is hovered or the page is hidden.
+ *
+ * @template {new (...args: any[]) => HTMLElement & { next(): void }} T
+ * @param {T} Base
+ */
+export function withAutoplay(Base) {
+  return class extends Base {
+    /**
+     * The interval ID for automatic playback.
+     * @type {number | undefined}
+     */
+    #interval = undefined;
+
+    /**
+     * Starts automatic slide playback.
+     * @param {number} [interval] - The time interval in milliseconds between slides.
+     */
+    play(interval = this.autoplayInterval) {
+      if (!this.autoplay || this.#interval) return;
+
+      this.paused = false;
+
+      this.#interval = setInterval(() => {
+        if (this.matches(':hover') || document.hidden) return;
+
+        this.next();
+      }, interval);
+    }
+
+    /**
+     * Pauses automatic slide playback.
+     */
+    pause() {
+      this.paused = true;
+      this.suspend();
+    }
+
+    get paused() {
+      return this.hasAttribute('paused');
+    }
+
+    set paused(paused) {
+      this.toggleAttribute('paused', paused);
+    }
+
+    /**
+     * Suspends automatic slide playback.
+     */
+    suspend() {
+      clearInterval(this.#interval);
+      this.#interval = undefined;
+    }
+
+    /**
+     * Resumes automatic slide playback if autoplay is enabled.
+     */
+    resume() {
+      if (!this.autoplay || this.paused) return;
+
+      this.pause();
+      this.play();
+    }
+
+    get autoplay() {
+      return Boolean(this.autoplayInterval);
+    }
+
+    get autoplayInterval() {
+      const value = Number.parseInt(`${this.getAttribute('autoplay')}`, 10);
+
+      return Number.isNaN(value) ? undefined : value * 1000;
+    }
+  };
+}
+
+/**
  * Creates a debounced function that delays calling the provided function (fn)
  * until after wait milliseconds have elapsed since the last time
  * the debounced function was invoked. The returned function has a .cancel()

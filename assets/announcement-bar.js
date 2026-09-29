@@ -1,4 +1,5 @@
 import { Component } from '@theme/component';
+import { withAutoplay } from '@theme/utilities';
 
 /**
  * Announcement banner custom element that allows fading between content.
@@ -12,14 +13,8 @@ import { Component } from '@theme/component';
  *
  * @extends {Component<Refs>}
  */
-export class AnnouncementBar extends Component {
+export class AnnouncementBar extends withAutoplay(Component) {
   #current = 0;
-
-  /**
-   * The interval ID for automatic playback.
-   * @type {number|undefined}
-   */
-  #interval = undefined;
 
   connectedCallback() {
     super.connectedCallback();
@@ -37,69 +32,6 @@ export class AnnouncementBar extends Component {
 
   previous() {
     this.current -= 1;
-  }
-
-  /**
-   * Starts automatic slide playback.
-   * @param {number} [interval] - The time interval in seconds between slides.
-   */
-  play(interval = this.autoplayInterval) {
-    if (!this.autoplay) return;
-
-    this.paused = false;
-
-    this.#interval = setInterval(() => {
-      if (this.matches(':hover') || document.hidden) return;
-
-      this.next();
-    }, interval);
-  }
-
-  /**
-   * Pauses automatic slide playback.
-   */
-  pause() {
-    this.paused = true;
-    this.suspend();
-  }
-
-  get paused() {
-    return this.hasAttribute('paused');
-  }
-
-  set paused(paused) {
-    this.toggleAttribute('paused', paused);
-  }
-
-  /**
-   * Suspends automatic slide playback.
-   */
-  suspend() {
-    clearInterval(this.#interval);
-    this.#interval = undefined;
-  }
-
-  /**
-   * Resumes automatic slide playback if autoplay is enabled.
-   */
-  resume() {
-    if (!this.autoplay || this.paused) return;
-
-    this.pause();
-    this.play();
-  }
-
-  get autoplay() {
-    return Boolean(this.autoplayInterval);
-  }
-
-  get autoplayInterval() {
-    const interval = this.getAttribute('autoplay');
-    const value = Number.parseInt(`${interval}`, 10);
-
-    if (Number.isNaN(value)) return undefined;
-
-    return value * 1000;
   }
 
   get current() {

@@ -6,6 +6,7 @@ import {
   mediaQueryLarge,
   prefersReducedMotion,
   preventDefault,
+  withAutoplay,
   viewTransition,
   scheduler,
 } from '@theme/utilities';
@@ -92,7 +93,7 @@ class SlideshowViewportObserver {
  *
  * @extends {Component<Refs>}
  */
-export class Slideshow extends Component {
+export class Slideshow extends withAutoplay(Component) {
   static get observedAttributes() {
     return ['initial-slide'];
   }
@@ -385,73 +386,6 @@ export class Slideshow extends Component {
   }
 
   /**
-   * Starts automatic slide playback.
-   * @param {number} [interval] - The time interval in seconds between slides.
-   */
-  play(interval = this.autoplayInterval) {
-    if (this.#interval) return;
-
-    this.paused = false;
-
-    this.#interval = setInterval(() => {
-      if (this.matches(':hover') || document.hidden) return;
-
-      this.next();
-    }, interval);
-  }
-
-  /**
-   * Pauses automatic slide playback.
-   */
-  pause() {
-    this.paused = true;
-    this.suspend();
-  }
-
-  get paused() {
-    return this.hasAttribute('paused');
-  }
-
-  set paused(value) {
-    if (value) {
-      this.setAttribute('paused', '');
-    } else {
-      this.removeAttribute('paused');
-    }
-  }
-
-  /**
-   * Suspends automatic slide playback.
-   */
-  suspend() {
-    clearInterval(this.#interval);
-    this.#interval = undefined;
-  }
-
-  /**
-   * Resumes automatic slide playback if autoplay is enabled.
-   */
-  resume() {
-    if (!this.autoplay || this.paused) return;
-
-    this.pause();
-    this.play();
-  }
-
-  get autoplay() {
-    return Boolean(this.autoplayInterval);
-  }
-
-  get autoplayInterval() {
-    const interval = this.getAttribute('autoplay');
-    const value = Number.parseInt(`${interval}`, 10);
-
-    if (Number.isNaN(value)) return undefined;
-
-    return value * 1000;
-  }
-
-  /**
    * The current slide index.
    * @type {number}
    */
@@ -536,12 +470,6 @@ export class Slideshow extends Component {
    * @type {boolean}
    */
   #disabled = false;
-
-  /**
-   * The interval ID for automatic playback.
-   * @type {number|undefined}
-   */
-  #interval = undefined;
 
   /**
    * The Scroller instance that manages scrolling.
