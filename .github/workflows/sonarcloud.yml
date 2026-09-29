@@ -5,6 +5,8 @@ on:
     branches: [main]
   pull_request:
     types: [opened, synchronize, reopened]
+  # Allows re-running the analysis from the GitHub Actions tab
+  workflow_dispatch:
 
 permissions:
   contents: read
